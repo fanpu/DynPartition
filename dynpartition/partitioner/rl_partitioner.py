@@ -7,10 +7,15 @@ from torchvision.models.resnet import ResNet, Bottleneck
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import ipdb
 
 from torchvision.models.resnet import ResNet, Bottleneck
 
 num_classes = 1000
+
+DEVICE_0 = 'cuda:0'
+DEVICE_1 = 'cpu'
+DEVICES = [DEVICE_0, DEVICE_1]
 
 
 class ModelParallelResNet50(ResNet):
@@ -20,6 +25,9 @@ class ModelParallelResNet50(ResNet):
 
         self.seq1 = nn.Sequential(
             self.conv1,
+        ).to(DEVICE_0)
+
+        self.seq2 = nn.Sequential(
             self.bn1,
             self.relu,
             self.maxpool,
@@ -28,21 +36,44 @@ class ModelParallelResNet50(ResNet):
             self.layer2,
             self.layer3,
             self.layer4,
-        ).to('cuda:0')
 
-        self.seq2 = nn.Sequential(
             self.avgpool,
-        ).to('cpu')
+        ).to(DEVICE_1)
 
-        self.fc.to('cpu')
+        self.fc.to(DEVICE_1)
 
     def forward(self, x):
-        x = self.seq2(self.seq1(x).to('cpu'))
+        x = self.seq2(self.seq1(x).to(DEVICE_1))
         return self.fc(x.view(x.size(0), -1))
 
 
+class PipelineParallelResNet50(ModelParallelResNet50):
+    def __init__(self, split_size=20, *args, **kwargs):
+        super(PipelineParallelResNet50, self).__init__(*args, **kwargs)
+        self.split_size = split_size
+
+    def forward(self, x):
+        splits = iter(x.split(self.split_size, dim=0))
+        s_next = next(splits)
+        s_prev = self.seq1(s_next).to(DEVICE_1)
+        ret = []
+
+        for s_next in splits:
+            # A. ``s_prev`` runs on ``cpu``
+            s_prev = self.seq2(s_prev)
+            ret.append(self.fc(s_prev.view(s_prev.size(0), -1)))
+
+            # B. ``s_next`` runs on ``cuda:0``, which can run concurrently with A
+            s_prev = self.seq1(s_next).to(DEVICE_1)
+
+        s_prev = self.seq2(s_prev)
+        ret.append(self.fc(s_prev.view(s_prev.size(0), -1)))
+
+        return torch.cat(ret)
+
+
 num_batches = 3
-batch_size = 50  # 120
+batch_size = 5  # 120
 image_w = 128
 image_h = 128
 
@@ -64,7 +95,7 @@ def train(model):
 
         # run forward pass
         optimizer.zero_grad()
-        outputs = model(inputs.to('cuda:0'))
+        outputs = model(inputs.to(DEVICE_0))
 
         # run backward pass
         labels = labels.to(outputs.device)
@@ -77,17 +108,6 @@ plt.switch_backend('Agg')
 num_repeat = 10
 
 stmt = "train(model)"
-
-setup = "model = ModelParallelResNet50()"
-mp_run_times = timeit.repeat(
-    stmt, setup, number=1, repeat=num_repeat, globals=globals())
-mp_mean, mp_std = np.mean(mp_run_times), np.std(mp_run_times)
-
-setup = "import torchvision.models as models;" + \
-        "model = models.resnet50(num_classes=num_classes).to('cuda:0')"
-rn_run_times = timeit.repeat(
-    stmt, setup, number=1, repeat=num_repeat, globals=globals())
-rn_mean, rn_std = np.mean(rn_run_times), np.std(rn_run_times)
 
 
 def plot(means, stds, labels, fig_name):
@@ -103,7 +123,43 @@ def plot(means, stds, labels, fig_name):
     plt.close(fig)
 
 
-plot([mp_mean, rn_mean],
-     [mp_std, rn_std],
-     ['Model Parallel', 'Single GPU'],
-     'mp_vs_rn.png')
+def single_gpu():
+    setup = "import torchvision.models as models;" + \
+            "model = models.resnet50(num_classes=num_classes).to(DEVICE_0)"
+    sg_run_times = timeit.repeat(
+        stmt, setup, number=1, repeat=num_repeat, globals=globals())
+    sg_mean, sg_std = np.mean(sg_run_times), np.std(sg_run_times)
+
+    return sg_mean, sg_std
+
+
+def model_parallelism():
+    """Model paralellism without pipelining"""
+    setup = "model = ModelParallelResNet50()"
+    mp_run_times = timeit.repeat(
+        stmt, setup, number=1, repeat=num_repeat, globals=globals())
+    mp_mean, mp_std = np.mean(mp_run_times), np.std(mp_run_times)
+
+    return mp_mean, mp_std
+
+
+def pipeline_parallelism():
+    """Model parallelism with pipelining"""
+    setup = "model = PipelineParallelResNet50()"
+    pp_run_times = timeit.repeat(
+        stmt, setup, number=1, repeat=num_repeat, globals=globals())
+    pp_mean, pp_std = np.mean(pp_run_times), np.std(pp_run_times)
+
+    return pp_mean, pp_std
+
+
+sg_mean, sg_std = single_gpu()
+mp_mean, mp_std = model_parallelism()
+pp_mean, pp_std = pipeline_parallelism()
+
+plot([mp_mean, sg_mean, pp_mean],
+     [mp_std, sg_std, pp_std],
+     ['Model Parallel', 'Single GPU', 'Pipelining Model Parallel'],
+     'mp_vs_rn_vs_pp.png')
+
+print("HI")
