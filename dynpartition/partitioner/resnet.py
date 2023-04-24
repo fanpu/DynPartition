@@ -1,13 +1,6 @@
 # TODO Fanpu
-import torchvision.models as models
-import timeit
-import numpy as np
-import matplotlib.pyplot as plt
-from torchvision.models.resnet import ResNet, Bottleneck
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import ipdb
 
 from torchvision.models.resnet import ResNet, Bottleneck
 
@@ -27,7 +20,12 @@ class ModelParallelResNet50(ResNet):
             the second device will start processing
         """
         super(ModelParallelResNet50, self).__init__(
-            Bottleneck, [3, 4, 6, 3], num_classes=num_classes, *args, **kwargs)
+            block=Bottleneck,
+            layers=[3, 4, 6, 3],
+            num_classes=num_classes,
+            *args,
+            **kwargs
+        )
 
         layers = [
             self.conv1,
@@ -40,7 +38,7 @@ class ModelParallelResNet50(ResNet):
             self.layer4,
             self.avgpool,
         ]
-        assert partition_layer < len(layers) and partition_layer > 0
+        assert len(layers) > partition_layer > 0
 
         self.seq1 = nn.Sequential(
             *layers[:partition_layer]
@@ -57,8 +55,7 @@ class ModelParallelResNet50(ResNet):
 
 class PipelineParallelResNet50(ModelParallelResNet50):
     def __init__(self, partition_layer, split_size=20, *args, **kwargs):
-        super(PipelineParallelResNet50,
-              self).__init__(partition_layer, *args, **kwargs)
+        super(PipelineParallelResNet50, self).__init__(partition_layer, *args, **kwargs)
         self.split_size = split_size
 
     def forward(self, x):
