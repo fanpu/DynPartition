@@ -19,28 +19,37 @@ DEVICES = [DEVICE_0, DEVICE_1]
 
 
 class ModelParallelResNet50(ResNet):
-    def __init__(self, *args, **kwargs):
+    # Assume split between 2 devices
+    def __init__(self, partition_layer, *args, **kwargs):
+        """
+        Args:
+            partition_layer (int): The first layer [0-indexed] that 
+            the second device will start processing
+        """
         super(ModelParallelResNet50, self).__init__(
             Bottleneck, [3, 4, 6, 3], num_classes=num_classes, *args, **kwargs)
 
-        self.seq1 = nn.Sequential(
+        layers = [
             self.conv1,
-        ).to(DEVICE_0)
-
-        self.seq2 = nn.Sequential(
             self.bn1,
             self.relu,
             self.maxpool,
-
             self.layer1,
             self.layer2,
             self.layer3,
             self.layer4,
-
             self.avgpool,
-        ).to(DEVICE_1)
+            self.fc
+        ]
+        assert partition_layer < len(layers) and partition_layer > 0
 
-        self.fc.to(DEVICE_1)
+        self.seq1 = nn.Sequential(
+            *layers[:partition_layer]
+        ).to(DEVICE_0)
+
+        self.seq2 = nn.Sequential(
+            *layers[partition_layer:]
+        ).to(DEVICE_1)
 
     def forward(self, x):
         x = self.seq2(self.seq1(x).to(DEVICE_1))
@@ -48,8 +57,9 @@ class ModelParallelResNet50(ResNet):
 
 
 class PipelineParallelResNet50(ModelParallelResNet50):
-    def __init__(self, split_size=20, *args, **kwargs):
-        super(PipelineParallelResNet50, self).__init__(*args, **kwargs)
+    def __init__(self, partition_layer, split_size=20, *args, **kwargs):
+        super(PipelineParallelResNet50, partition_layer,
+              self).__init__(*args, **kwargs)
         self.split_size = split_size
 
     def forward(self, x):
@@ -123,6 +133,9 @@ def plot(means, stds, labels, fig_name):
     plt.close(fig)
 
 
+partition_layer = 3
+
+
 def single_gpu():
     setup = "import torchvision.models as models;" + \
             "model = models.resnet50(num_classes=num_classes).to(DEVICE_0)"
@@ -135,7 +148,7 @@ def single_gpu():
 
 def model_parallelism():
     """Model paralellism without pipelining"""
-    setup = "model = ModelParallelResNet50()"
+    setup = f"model = ModelParallelResNet50(partition_layer={partition_layer})"
     mp_run_times = timeit.repeat(
         stmt, setup, number=1, repeat=num_repeat, globals=globals())
     mp_mean, mp_std = np.mean(mp_run_times), np.std(mp_run_times)
@@ -145,7 +158,7 @@ def model_parallelism():
 
 def pipeline_parallelism():
     """Model parallelism with pipelining"""
-    setup = "model = PipelineParallelResNet50()"
+    setup = f"model = PipelineParallelResNet50(partition_layer={partition_layer})"
     pp_run_times = timeit.repeat(
         stmt, setup, number=1, repeat=num_repeat, globals=globals())
     pp_mean, pp_std = np.mean(pp_run_times), np.std(pp_run_times)
