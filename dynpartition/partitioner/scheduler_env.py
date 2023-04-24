@@ -1,14 +1,21 @@
 import gym
 from gym import spaces
-import pygame
 import numpy as np
+from resnet import PipelineParallelResNet50
+import torch
+import timeit
+
+batch_size = 30  # 120
+image_w = 128
+image_h = 128
+DEVICE_0 = 'cuda:0'
+DEVICE_1 = 'cpu'
+DEVICES = [DEVICE_0, DEVICE_1]
 
 
 class SchedulerEnv(gym.Env):
     num_batches = 10
-    batch_size = 30  # 120
-    image_w = 128
-    image_h = 128
+    num_repeat = 1  # increase for variance reduction when computing rewards
 
     """
     Current Assumptions: 2 devices
@@ -19,7 +26,7 @@ class SchedulerEnv(gym.Env):
     However let's retain this flexibility for now.
     """
 
-    def __init__(self, render_mode=None, size=5):
+    def __init__(self, render_mode=None):
         # Do not support render_mode for now
 
         self.num_layers = 9
@@ -53,31 +60,36 @@ class SchedulerEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
-        super().reset(seed=seed)
+        # super().reset()
 
         self.current_batch = 0
+        self.prev_action = None
+        self.prev_model = None  # Cache prev model
 
         observation = self._get_obs()
         info = self._get_info()
-
-        # if self.render_mode == "human":
-        #     self._render_frame()
 
         return observation, info
 
     def step(self, action):
         assert self.current_batch < self.num_batches
 
-        # Map the action (element of {0,1,2,3}) to the direction we walk in
-        direction = self._action_to_direction[action]
-        # We use `np.clip` to make sure we don't leave the grid
-        self._agent_location = np.clip(
-            self._agent_location + direction, 0, self.size - 1
-        )
-        # An episode is done iff the agent has reached the target
-        terminated = np.array_equal(
-            self._agent_location, self._target_location)
-        reward = 1 if terminated else 0  # Binary sparse rewards
+        partition_layer = action
+        self.current_batch += 1
+
+        terminated = self.current_batch == self.num_batches
+
+        setup = f"""\
+inputs = torch.randn(batch_size, 3, image_w, image_h)
+model = PipelineParallelResNet50(partition_layer={partition_layer})"""
+        stmt = f"""\
+outputs = model(inputs.to(DEVICE_0))"""
+        run_times = timeit.repeat(
+            stmt, setup, number=1, repeat=self.num_repeat, globals=globals())
+        mean, std = np.mean(run_times), np.std(run_times)
+
+        reward = -mean
+
         observation = self._get_obs()
         info = self._get_info()
 

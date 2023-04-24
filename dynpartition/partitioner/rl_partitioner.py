@@ -3,12 +3,11 @@ import torchvision.models as models
 import timeit
 import numpy as np
 import matplotlib.pyplot as plt
-from torchvision.models.resnet import ResNet, Bottleneck
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import ipdb
-
+from scheduler_env import SchedulerEnv
 from torchvision.models.resnet import ResNet, Bottleneck
 
 num_classes = 1000
@@ -39,7 +38,6 @@ class ModelParallelResNet50(ResNet):
             self.layer3,
             self.layer4,
             self.avgpool,
-            self.fc
         ]
         assert partition_layer < len(layers) and partition_layer > 0
 
@@ -58,8 +56,8 @@ class ModelParallelResNet50(ResNet):
 
 class PipelineParallelResNet50(ModelParallelResNet50):
     def __init__(self, partition_layer, split_size=20, *args, **kwargs):
-        super(PipelineParallelResNet50, partition_layer,
-              self).__init__(*args, **kwargs)
+        super(PipelineParallelResNet50,
+              self).__init__(partition_layer, *args, **kwargs)
         self.split_size = split_size
 
     def forward(self, x):
@@ -90,27 +88,13 @@ image_h = 128
 
 def train(model):
     model.train(True)
-    loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
-
-    one_hot_indices = torch.LongTensor(batch_size) \
-                           .random_(0, num_classes) \
-                           .view(batch_size, 1)
 
     for _ in range(num_batches):
-        # generate random inputs and labels
+        # generate random inputs
         inputs = torch.randn(batch_size, 3, image_w, image_h)
-        labels = torch.zeros(batch_size, num_classes) \
-                      .scatter_(1, one_hot_indices, 1)
 
         # run forward pass
-        optimizer.zero_grad()
         outputs = model(inputs.to(DEVICE_0))
-
-        # run backward pass
-        labels = labels.to(outputs.device)
-        loss_fn(outputs, labels).backward()
-        optimizer.step()
 
 
 plt.switch_backend('Agg')
@@ -166,13 +150,23 @@ def pipeline_parallelism():
     return pp_mean, pp_std
 
 
-sg_mean, sg_std = single_gpu()
-mp_mean, mp_std = model_parallelism()
-pp_mean, pp_std = pipeline_parallelism()
+# sg_mean, sg_std = single_gpu()
+# mp_mean, mp_std = model_parallelism()
+# pp_mean, pp_std = pipeline_parallelism()
 
-plot([mp_mean, sg_mean, pp_mean],
-     [mp_std, sg_std, pp_std],
-     ['Model Parallel', 'Single GPU', 'Pipelining Model Parallel'],
-     'mp_vs_rn_vs_pp.png')
+# plot([mp_mean, sg_mean, pp_mean],
+#      [mp_std, sg_std, pp_std],
+#      ['Model Parallel', 'Single GPU', 'Pipelining Model Parallel'],
+#      'mp_vs_rn_vs_pp.png')
 
-print("HI")
+def main():
+    env = SchedulerEnv()
+    env.reset()
+    terminated = False
+    while not terminated:
+        observation, reward, terminated, _, info = env.step(8)
+        print(reward)
+
+
+if __name__ == '__main__':
+    main()
