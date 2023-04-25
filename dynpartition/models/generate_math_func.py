@@ -10,17 +10,14 @@ from dynpartition.util.tree import Tree
 UNITARY_OPS = (
     sympy.sin,
     sympy.cos,
-    # sympy.exp,
 )
 BINARY_OPS = (
     sympy.Add,
     sympy.Mul,
-    # sympy.ln,
-    # sympy.Pow,
-    # sympy.atan,
 )
 
 All_OPS = UNITARY_OPS + BINARY_OPS
+STRING_BINARY_OPS = tuple([i.__name__ for i in BINARY_OPS])
 
 
 def args(n, atoms, funcs):
@@ -77,18 +74,23 @@ def sympy_to_tree(equation):
     return tree
 
 
+def get_proper_math_tree(num_ops):
+    while True:
+        tree = sympy_to_tree(expr(num_ops))
+        if tree is None:
+            continue
+
+        if tree.depth() > num_ops:
+            continue
+
+        return tree
+
+
 if __name__ == '__main__':
     max_eq = 100
     max_ops = 10
     c = 1
-    while c < max_eq + 1:
-        expression_tree = sympy_to_tree(expr(max_ops))
-        if expression_tree is None:
-            continue
-
-        if expression_tree.depth() > max_ops:
-            continue
-
-        c_str = str(c).zfill(math.ceil(math.log10(max_eq)) + 1)
-        print(f'{c_str}: {expression_tree.gold_label:+2.4f} = {expression_tree}')
-        c += 1
+    for i in range(max_eq):
+        expression_tree = get_proper_math_tree(max_ops)
+        i = str(i).zfill(math.ceil(math.log10(max_eq)) + 1)
+        print(f'{i}: {expression_tree.gold_label:+2.4f} = {expression_tree}')
