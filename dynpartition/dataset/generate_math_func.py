@@ -5,7 +5,7 @@ from random import choice, randint
 import sympy
 from sympy.abc import x
 
-from dynpartition.util.tree import Tree
+from dynpartition.dataset.tree import Tree
 
 UNITARY_OPS = (
     sympy.sin,

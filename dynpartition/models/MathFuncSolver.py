@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from dynpartition.models.generate_math_func import get_proper_math_tree, STRING_BINARY_OPS
-from dynpartition.util.tree import Tree
+from dynpartition.dataset.generate_math_func import STRING_BINARY_OPS, get_proper_math_tree
+from dynpartition.dataset.tree import Tree
 
 
 class MathBinaryTreeLeafModule(nn.Module):

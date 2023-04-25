@@ -1,32 +1,50 @@
 # tree object from stanfordnlp/treelstm
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+import dataclasses
+from typing import List, Optional
 
-from torch import Tensor
 
-
+@dataclasses.dataclass
 class Tree:
-    def __init__(self):
-        self.parent: Optional[Tree] = None
-        self.num_children: int = 0
-        self.children: List[Tree] = list()
-        self.idx: Optional[int] = None  # node index for SST
-        self.gold_label: Optional[int] = None  # node label for SST
-        self.output: Optional[int] = None  # output node for SST
-        self.state: Optional[Tuple[Tensor, Tensor]] = None
+    parent: Optional[Tree] = None
+    children: List[Tree] = dataclasses.field(default_factory=list)
+    idx: Optional[int] = None  # node index for SST
+    gold_label: Optional[int] = None  # node label for SST
+    output: Optional[int] = None  # output node for SST
 
-        # used by Math Functions only
-        self.layer: Optional[str] = None  # layer of the node in the tree
-        self.name: Optional[str] = None  # name of the node
+    # used by Math Functions only
+    layer: Optional[str] = None  # layer of the node in the tree
+    name: Optional[str] = None  # name of the node
+
+    @property
+    def num_children(self):
+        return len(self.children)
 
     @property
     def value(self):
         return self.gold_label
 
+    def state_dict(self):
+        return {
+            "children": [child.state_dict() for child in self.children],
+            "idx": self.idx,
+            "gold_label": self.gold_label,
+            "output": self.output,
+        }
+
+    def load_state_dict(self, state_dict):
+        self.children = [Tree().load_state_dict(child) for child in state_dict["children"]]
+        for child in self.children:
+            child.parent = self
+
+        self.idx = state_dict["idx"]
+        self.gold_label = state_dict["gold_label"]
+        self.output = state_dict["output"]
+        return self
+
     def add_child(self, child) -> Tree:
         child.parent = self
-        self.num_children += 1
         self.children.append(child)
         return self
 
@@ -54,7 +72,7 @@ class Tree:
         elif self.layer is not None:
             return self.layer
         else:
-            return super().__repr__()
+            return f"Tree: value={self.value}, children={self.num_children}"
 
     def is_leaf(self):
         return self.num_children == 0
