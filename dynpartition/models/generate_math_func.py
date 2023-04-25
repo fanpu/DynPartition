@@ -77,13 +77,6 @@ def sympy_to_tree(equation):
     return tree
 
 
-def tree_depth(tree):
-    if tree.num_children == 0:
-        return 1
-
-    return 1 + max(tree_depth(child) for child in tree.children)
-
-
 if __name__ == '__main__':
     max_eq = 100
     max_ops = 10
@@ -93,7 +86,7 @@ if __name__ == '__main__':
         if expression_tree is None:
             continue
 
-        if tree_depth(expression_tree) > max_ops:
+        if expression_tree.depth() > max_ops:
             continue
 
         c_str = str(c).zfill(math.ceil(math.log10(max_eq)) + 1)
