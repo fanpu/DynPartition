@@ -5,8 +5,11 @@
 # Paper: https://arxiv.org/abs/1503.00075
 # Survey: https://arxiv.org/abs/2102.04906
 # Constituency Parsing vs Dependency Parsing: https://www.baeldung.com/cs/constituency-vs-dependency-parsing
+
 import torch
 import torch.nn as nn
+
+from dynpartition.util.tree import Tree
 
 
 class BinaryTreeLeafModule(nn.Module):
@@ -55,9 +58,7 @@ class BinaryTreeComposer(nn.Module):
             self.rfrh = self.rfrh.cuda()
             self.ulh = self.ulh.cuda()
 
-    def forward(self, left_node, right_node):
-        lc, lh = left_node
-        rc, rh = right_node
+    def forward(self, lc, lh, rc, rh):
         i = torch.sigmoid(self.ilh(lh) + self.irh(rh))
         lf = torch.sigmoid(self.lflh(lh) + self.lfrh(rh))
         rf = torch.sigmoid(self.rflh(lh) + self.rfrh(rh))
@@ -79,8 +80,8 @@ class SentimentModule(nn.Module):
         if self.cudaFlag:
             self.l1 = self.l1.cuda()
 
-    def forward(self, vec):
-        return self.logsoftmax(self.l1(vec))
+    def forward(self, *vec):
+        return self.logsoftmax(self.l1(vec[1]))
 
 
 class BinaryTreeLSTM(nn.Module):
@@ -95,13 +96,17 @@ class BinaryTreeLSTM(nn.Module):
         self.composer = BinaryTreeComposer(cuda, in_dim, mem_dim)
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
-    def forward(self, tree, inputs):
+    def forward(self, tree: Tree, inputs: torch.Tensor):
         if tree.num_children == 0:
             tree.state = self.leaf_module.forward(inputs[tree.idx - 1])
         else:
-            tree.state = self.composer.forward(tree.children[0].state, tree.children[1].state)
+            for child in tree.children:
+                self.forward(child, inputs)
 
-        tree.output = self.output_module.forward(tree.state[1])
+            states = sum([child.state for child in tree.children], ())
+            tree.state = self.composer.forward(*states)
+
+        tree.output = self.output_module.forward(*tree.state)
         return tree.output
 
 
