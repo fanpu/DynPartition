@@ -11,6 +11,7 @@ class Tree:
     children: List[Tree] = dataclasses.field(default_factory=list)
     gold_label: Optional[int] = None  # node label
     value: Optional[int] = None  # node value for leaf nodes
+    idx: Optional[int] = None
 
     # used by Math Functions only
     layer: Optional[str] = None  # layer of the node in the tree
@@ -34,6 +35,7 @@ class Tree:
             "children": [child.state_dict() for child in self.children],
             "gold_label": self.gold_label,
             "value": self.value,
+            "idx": self.idx,
 
             # used by Math Functions only
             "layer": self.layer,
@@ -45,8 +47,10 @@ class Tree:
         for child in self.children:
             child.parent = self
 
-        self.gold_label = state_dict["gold_label"]
         self.value = state_dict["value"]
+        self.gold_label = state_dict["gold_label"]
+        if "idx" in state_dict:
+            self.idx = state_dict["idx"]
 
         # used by Math Functions only
         self.layer = state_dict["layer"] if "layer" in state_dict else None
@@ -83,7 +87,7 @@ class Tree:
         elif self.layer is not None:
             return self.layer
         else:
-            return f"Tree: label={self.label}, value={self.value}, children={self.num_children}"
+            return f"Tree: label={self.label}, value={self.value}, idx={self.idx}, children={self.num_children}"
 
     def is_leaf(self):
         return self.num_children == 0
