@@ -8,18 +8,18 @@ import torch
 
 @dataclasses.dataclass
 class Tree:
-    parent: Optional[Tree] = None
     children: List[Tree] = dataclasses.field(default_factory=list)
     idx: Optional[int] = None  # node index for SST
     gold_label: Optional[int] = None  # node label for SST
-    output: Optional[int] = None  # output node for SST
 
     # used by Math Functions only
     layer: Optional[str] = None  # layer of the node in the tree
     name: Optional[str] = None  # name of the node
 
     # runtime
+    parent: Optional[Tree] = None
     state: Union[None, Tuple[torch.Tensor, ...]] = None
+    output: Optional[int] = None  # output node for SST
 
     @property
     def num_children(self):
@@ -34,7 +34,6 @@ class Tree:
             "children": [child.state_dict() for child in self.children],
             "idx": self.idx,
             "gold_label": self.gold_label,
-            "output": self.output,
 
             # used by Math Functions only
             "layer": self.layer,
@@ -48,7 +47,6 @@ class Tree:
 
         self.idx = state_dict["idx"]
         self.gold_label = state_dict["gold_label"]
-        self.output = state_dict["output"]
 
         # used by Math Functions only
         self.layer = state_dict["layer"] if "layer" in state_dict else None
