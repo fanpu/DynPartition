@@ -61,16 +61,18 @@ def test_tree_lstm(device: torch.device, model: TreeLSTMSentiment, embedding_mod
 if __name__ == '__main__':
     print("Testing...")
     print()
-    device = torch.device("cuda" if (False and torch.cuda.is_available()) else "cpu")
+    device = torch.device("cuda" if (
+        False and torch.cuda.is_available()) else "cpu")
 
-    model, dataset = load_math_model()
+    model, dataset = load_math_model(device)
     model.to(device)
     math_acc = test_math_model(device, model, dataset)
     print(f"Math accuracy: {math_acc * 100:.4f}%")
 
     print()
     print()
-    embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
+    embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(
+        device)
     model.to(device)
     embedding_model.to(device)
     dev_acc = test_tree_lstm(device, model, embedding_model, dev_dataset)

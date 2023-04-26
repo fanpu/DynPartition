@@ -29,12 +29,16 @@ def load_tree_lstm(device):
 
     vocab_size = 21699
     # vocab_size = Vocab().load_state_dict(torch.load(data_path.joinpath(vocab_file))).size()
-    train_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(train_file), map_location=device))
-    dev_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(dev_file), map_location=device))
-    test_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(test_file), map_location=device))
+    train_dataset = SSTDataset().load_state_dict(torch.load(
+        data_path.joinpath(train_file), map_location=device))
+    dev_dataset = SSTDataset().load_state_dict(torch.load(
+        data_path.joinpath(dev_file), map_location=device))
+    test_dataset = SSTDataset().load_state_dict(torch.load(
+        data_path.joinpath(test_file), map_location=device))
 
     embedding_model = nn.Embedding(vocab_size, input_dim)
-    embedding_model.load_state_dict(torch.load(data_path.joinpath(embedding_file), map_location=device))
+    embedding_model.load_state_dict(torch.load(
+        data_path.joinpath(embedding_file), map_location=device))
     print("Embedding model loaded")
 
     model = TreeLSTMSentiment(
@@ -46,7 +50,8 @@ def load_tree_lstm(device):
         model_name="constituency",
         criterion=None,
     )
-    model.load_state_dict(torch.load(data_path.joinpath(model_file)))
+    model.load_state_dict(torch.load(
+        data_path.joinpath(model_file), map_location=device))
     print("Model loaded")
 
     embedding_model.eval()
@@ -65,7 +70,8 @@ def load_math_model(device, max_ops=5, dataset_size=10000):
     dataset = torch.load(data_path.joinpath(dataset_file), map_location=device)
 
     if dataset_size > len(dataset):
-        warnings.warn(f"Requested dataset size ({dataset_size}) is larger than cached dataset ({len(dataset)})")
+        warnings.warn(
+            f"Requested dataset size ({dataset_size}) is larger than cached dataset ({len(dataset)})")
     else:
         dataset = dataset[:dataset_size]
 

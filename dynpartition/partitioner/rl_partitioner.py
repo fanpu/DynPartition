@@ -142,8 +142,14 @@ def main():
 
 
 if __name__ == '__main__':
+    device = torch.device("cuda" if (
+        False and torch.cuda.is_available()) else "cpu")
+    embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(
+        device)
     ipdb.set_trace()
-    embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
+    pass
+    pass
+    pass
     pass
 
     main()
