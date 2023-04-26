@@ -83,23 +83,24 @@ class SentimentModule(nn.Module):
 
 
 class BinaryTreeLSTM(nn.Module):
-    def __init__(self, cuda, in_dim, mem_dim, num_classes, criterion):
+    def __init__(self, cuda, in_dim, mem_dim, num_classes, embedding_model):
         super(BinaryTreeLSTM, self).__init__()
         self.cudaFlag = cuda
         self.in_dim = in_dim
         self.mem_dim = mem_dim
-        self.criterion = criterion
 
+        self.embedding_model = embedding_model
         self.leaf_module = BinaryTreeLeafModule(cuda, in_dim, mem_dim)
         self.composer = BinaryTreeComposer(cuda, in_dim, mem_dim)
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
-    def forward(self, tree: Tree, inputs: torch.Tensor):
+    def forward(self, tree: Tree):
         if tree.num_children == 0:
-            tree.state = self.leaf_module.forward(inputs[tree.idx - 1])
+            value = self.embedding_model(tree.value)
+            tree.state = self.leaf_module.forward(value)
         else:
             for child in tree.children:
-                self.forward(child, inputs)
+                self.forward(child)
 
             states = sum([child.state for child in tree.children], ())
             tree.state = self.composer.forward(*states)
@@ -117,5 +118,5 @@ class TreeLSTMSentiment(nn.Module):
         self.tree_module = BinaryTreeLSTM(cuda, in_dim, mem_dim, num_classes, criterion)
         self.output_module = self.tree_module.output_module
 
-    def forward(self, tree, inputs):
-        return self.tree_module(tree, inputs)
+    def forward(self, tree):
+        return self.tree_module(tree)

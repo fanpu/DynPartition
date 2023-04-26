@@ -55,12 +55,12 @@ class BinaryTreeMath(nn.Module):
         self.composer = MathBinaryTreeComposer()
         self.output_module = MathCheckModule()
 
-    def forward(self, tree: Tree, inputs: torch.Tensor):
+    def forward(self, tree: Tree):
         if tree.num_children == 0:
-            tree.state = self.leaf_module.forward(inputs[tree.idx - 1])
+            tree.state = self.leaf_module.forward(tree.value)
         else:
             for child in tree.children:
-                self.forward(child, inputs)
+                self.forward(child)
 
             states = sum([(tree.layer,)] + [child.state for child in tree.children], ())
             tree.state = self.composer.forward(*states)
@@ -75,8 +75,8 @@ class MathFuncSolver(nn.Module):
         self.tree_module = BinaryTreeMath()
         self.output_module = self.tree_module.output_module
 
-    def forward(self, tree, inputs):
-        return self.tree_module(tree, inputs)
+    def forward(self, tree):
+        return self.tree_module(tree)
 
 
 if __name__ == '__main__':

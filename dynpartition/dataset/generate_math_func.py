@@ -73,6 +73,9 @@ def sympy_to_tree(equation):
         return None
 
     tree.gold_label = solution
+    if not isinstance(equation, All_OPS):
+        tree.value = tree.gold_label
+
     return tree
 
 
@@ -107,10 +110,13 @@ def create_pth_file(num_ops=5, dataset_size=10000):
 
 
 if __name__ == '__main__':
-    max_eq = 100
-    max_ops = 10
-    c = 1
-    for i in range(max_eq):
-        expression_tree = get_proper_math_tree(max_ops)
-        i = str(i).zfill(math.ceil(math.log10(max_eq)) + 1)
-        print(f'{i}: {expression_tree.gold_label:+2.4f} = {expression_tree}')
+    # max_eq = 100
+    # max_ops = 10
+    # c = 1
+    # for i in range(max_eq):
+    #     expression_tree = get_proper_math_tree(max_ops)
+    #     i = str(i).zfill(math.ceil(math.log10(max_eq)) + 1)
+    #     print(f'{i}: {expression_tree.gold_label:+2.4f} = {expression_tree}')
+
+    for i in range(1, 11):
+        create_pth_file(i, 10000)

@@ -9,8 +9,8 @@ import torch
 @dataclasses.dataclass
 class Tree:
     children: List[Tree] = dataclasses.field(default_factory=list)
-    idx: Optional[int] = None  # node index for SST
-    gold_label: Optional[int] = None  # node label for SST
+    gold_label: Optional[int] = None  # node label
+    value: Optional[int] = None  # node value for leaf nodes
 
     # used by Math Functions only
     layer: Optional[str] = None  # layer of the node in the tree
@@ -26,14 +26,14 @@ class Tree:
         return len(self.children)
 
     @property
-    def value(self):
+    def label(self):
         return self.gold_label
 
     def state_dict(self):
         return {
             "children": [child.state_dict() for child in self.children],
-            "idx": self.idx,
             "gold_label": self.gold_label,
+            "value": self.value,
 
             # used by Math Functions only
             "layer": self.layer,
@@ -45,8 +45,8 @@ class Tree:
         for child in self.children:
             child.parent = self
 
-        self.idx = state_dict["idx"]
         self.gold_label = state_dict["gold_label"]
+        self.value = state_dict["value"]
 
         # used by Math Functions only
         self.layer = state_dict["layer"] if "layer" in state_dict else None
@@ -83,7 +83,7 @@ class Tree:
         elif self.layer is not None:
             return self.layer
         else:
-            return f"Tree: value={self.value}, children={self.num_children}"
+            return f"Tree: label={self.label}, value={self.value}, children={self.num_children}"
 
     def is_leaf(self):
         return self.num_children == 0
@@ -96,13 +96,3 @@ class Tree:
 
     def num_leaf_nodes(self):
         return len(self.get_leaf_nodes())
-
-    def get_leaf_values(self, set_idx=False, offset=0):
-        result = []
-        for idx, leaf in enumerate(self.get_leaf_nodes()):
-            if set_idx:
-                leaf.idx = idx + offset
-
-            result.append(leaf.gold_label)
-
-        return result
