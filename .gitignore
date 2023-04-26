@@ -5,6 +5,8 @@ __pycache__/
 
 _data/
 _data/**
+_logs/
+_logs/**
 .idea
 .idea/**
 .vscode

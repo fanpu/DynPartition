@@ -1,9 +1,8 @@
-import gym
-from gym import spaces
-import numpy as np
-from resnet import PipelineParallelResNet50
-import torch
 import timeit
+
+import gym
+import numpy as np
+from gym import spaces
 
 batch_size = 30  # 120
 image_w = 128

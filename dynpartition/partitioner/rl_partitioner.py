@@ -1,14 +1,13 @@
 # TODO: Fanpu
-import torchvision.models as models
 import timeit
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import ipdb
-from scheduler_env import SchedulerEnv
 from torchvision.models.resnet import ResNet, Bottleneck
+
+from scheduler_env import SchedulerEnv
 
 num_classes = 1000
 
@@ -26,7 +25,12 @@ class ModelParallelResNet50(ResNet):
             the second device will start processing
         """
         super(ModelParallelResNet50, self).__init__(
-            Bottleneck, [3, 4, 6, 3], num_classes=num_classes, *args, **kwargs)
+            block=Bottleneck,
+            layers=[3, 4, 6, 3],
+            num_classes=num_classes,
+            *args,
+            **kwargs
+        )
 
         layers = [
             self.conv1,
@@ -39,7 +43,7 @@ class ModelParallelResNet50(ResNet):
             self.layer4,
             self.avgpool,
         ]
-        assert partition_layer < len(layers) and partition_layer > 0
+        assert len(layers) > partition_layer > 0
 
         self.seq1 = nn.Sequential(
             *layers[:partition_layer]
@@ -157,7 +161,7 @@ def pipeline_parallelism():
 # plot([mp_mean, sg_mean, pp_mean],
 #      [mp_std, sg_std, pp_std],
 #      ['Model Parallel', 'Single GPU', 'Pipelining Model Parallel'],
-#      'mp_vs_rn_vs_pp.png')
+#      get_plot_path().joinpath('mp_vs_rn_vs_pp.png'))
 
 def main():
     env = SchedulerEnv()

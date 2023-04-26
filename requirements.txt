@@ -1,10 +1,12 @@
---index-url https://download.pytorch.org/whl/cu118
-torch
-torchvision
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch~=2.0.0
+torchvision~=0.15.1
 torchaudio
+gym~=0.26.2
 
 torchinfo
-
-numpy
+numpy~=1.24.3
 seaborn
-matplotlib
+matplotlib~=3.7.1
+tqdm~=4.65.0
+sympy~=1.11.1

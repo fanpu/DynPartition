@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # TODO fanpu
 
-import numpy as np
-import copy
-import gym
-import sys
-import copy
 import argparse
-import os
-import torch
-from torch import tensor
 import collections
-import tqdm
+import os
+import sys
+
+import gym
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import tqdm
+from torch import tensor
+
+from dynpartition.get_dir import get_plot_path
 
 
 class FullyConnectedModel(torch.nn.Module):
@@ -80,7 +81,6 @@ class QNetwork():
 class Replay_Memory():
 
     def __init__(self, memory_size=50000, burn_in=10000):
-
         # The memory essentially stores transitions recorder from the agent
         # taking actions in the environment.
 
@@ -221,7 +221,7 @@ class DQN_Agent():
         state = self.env.reset()
         for i in range(10000):
             action = np.random.choice(self.nA)
-            new_state, reward, done, info = self.env.step(action)
+            new_state, reward, done, truncated, info = self.env.step(action)
             self.replay.append((state, action, reward, new_state, done))
             state = new_state
             if done:
@@ -274,7 +274,7 @@ def main(args):
 
     num_seeds = 5
     num_episodes = 200
-    l = num_episodes//10
+    l = num_episodes // 10
     res = np.zeros((num_seeds, l))
     num_test_episodes = 20
     for i in tqdm.tqdm(range(num_seeds)):
@@ -300,7 +300,7 @@ def main(args):
 
         res[i] = np.array(reward_means)
 
-    ks = np.arange(l)*10
+    ks = np.arange(l) * 10
     avs = np.mean(res, axis=0)
     maxs = np.max(res, axis=0)
     mins = np.min(res, axis=0)
@@ -311,11 +311,8 @@ def main(args):
     plt.xlabel('Episode', fontsize=15)
     plt.ylabel('Return', fontsize=15)
 
-    if not os.path.exists('./plots'):
-        os.mkdir('./plots')
-
     plt.title("DQN Learning Curve", fontsize=24)
-    plt.savefig("./plots/dqn_curve.png")
+    plt.savefig(get_plot_path().joinpath("dqn_curve.png"))
 
 
 if __name__ == '__main__':
