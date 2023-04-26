@@ -23,14 +23,11 @@ class SSTDataset(data.Dataset):
         self.model_name: str = model_name
 
         if path is not None:
-            temp_sentences = self.read_sentences(
-                os.path.join(path, 'sents.toks'))
+            temp_sentences = self.read_sentences(os.path.join(path, 'sents.toks'))
             if self.model_name == "dependency":
-                temp_trees = self.read_trees(os.path.join(
-                    path, 'dparents.txt'), os.path.join(path, 'dlabels.txt'))
+                temp_trees = self.read_trees(os.path.join(path, 'dparents.txt'), os.path.join(path, 'dlabels.txt'))
             elif self.model_name == "constituency":
-                temp_trees = self.read_trees(os.path.join(
-                    path, 'parents.txt'), os.path.join(path, 'labels.txt'))
+                temp_trees = self.read_trees(os.path.join(path, 'parents.txt'), os.path.join(path, 'labels.txt'))
             else:
                 raise Exception("Model name not found")
         else:
@@ -55,8 +52,7 @@ class SSTDataset(data.Dataset):
         for i in range(0, len(self.trees)):
             labels.append(self.trees[i].gold_label)
 
-        self.labels: torch.Tensor = torch.Tensor(
-            labels)  # let labels be tensor
+        self.labels: torch.Tensor = torch.Tensor(labels)  # let labels be tensor
         self.size: int = len(self.trees)
 
     def state_dict(self):
@@ -99,8 +95,7 @@ class SSTDataset(data.Dataset):
 
     def read_sentences(self, filename) -> List[torch.Tensor]:
         with open(filename, 'r', encoding="utf-8") as f:
-            sentences = [self.read_sentence(
-                line) for line in tqdm(f.readlines(), ascii=True)]
+            sentences = [self.read_sentence(line) for line in tqdm(f.readlines(), ascii=True)]
         return sentences
 
     def read_sentence(self, line) -> torch.Tensor:
@@ -108,12 +103,9 @@ class SSTDataset(data.Dataset):
         return torch.tensor(indices).type(torch.long)
 
     def read_trees(self, filename_parents, filename_labels) -> List[Tree]:
-        parent = open(filename_parents, 'r',
-                      encoding="utf-8").readlines()  # parent node
-        label = open(filename_labels, 'r',
-                     encoding="utf-8").readlines()  # label node
-        trees = [self.read_tree(p_line, l_line) for p_line, l_line in tqdm(
-            zip(parent, label), ascii=True)]
+        parent = open(filename_parents, 'r', encoding="utf-8").readlines()  # parent node
+        label = open(filename_labels, 'r', encoding="utf-8").readlines()  # label node
+        trees = [self.read_tree(p_line, l_line) for p_line, l_line in tqdm(zip(parent, label), ascii=True)]
         return trees
 
     def parse_dlabel_token(self, x):
@@ -139,8 +131,7 @@ class SSTDataset(data.Dataset):
         # parents is list base 0, keep idx-1
         # labels is list base 0, keep idx-1
         # parents = map(int,line.split()) # split each number and turn to int
-        # split each number and turn to int
-        parents = list(map(int, line.split()))
+        parents = list(map(int, line.split()))  # split each number and turn to int
         trees = dict()  # this is dict
         root = None
         # labels = map(self.parse_dlabel_token, label_line.split())
