@@ -57,14 +57,17 @@ class BinaryTreeMath(nn.Module):
 
     def forward(self, tree: Tree):
         if tree.num_children == 0:
+            # Leaf Module
             tree.state = self.leaf_module.forward(tree.value)
         else:
             for child in tree.children:
                 self.forward(child)
 
+            # Non-leaf Module
             states = sum([(tree.layer,)] + [child.state for child in tree.children], ())
             tree.state = self.composer.forward(*states)
 
+        # Output Module
         tree.output = self.output_module.forward(*tree.state)
         return tree.output
 

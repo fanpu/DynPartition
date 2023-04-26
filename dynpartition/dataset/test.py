@@ -58,7 +58,7 @@ if __name__ == '__main__':
     lovely_tensors.monkey_patch()
     print("Testing...")
     print()
-    device = torch.device("cuda" if (True and torch.cuda.is_available()) else "cpu")
+    device = torch.device("cuda" if (False and torch.cuda.is_available()) else "cpu")
 
     model, dataset = load_math_model(device)
     model.to(device)
