@@ -11,7 +11,7 @@ from dynpartition.models.MathFuncSolver import MathFuncSolver
 from dynpartition.models.TreeLSTM import TreeLSTMSentiment
 
 
-def load_tree_lstm():
+def load_tree_lstm(device):
     num_classes = 3
     input_dim = 300
     mem_dim = 150
@@ -29,12 +29,12 @@ def load_tree_lstm():
 
     vocab_size = 21699
     # vocab_size = Vocab().load_state_dict(torch.load(data_path.joinpath(vocab_file))).size()
-    train_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(train_file)))
-    dev_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(dev_file)))
-    test_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(test_file)))
+    train_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(train_file), map_location=device))
+    dev_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(dev_file), map_location=device))
+    test_dataset = SSTDataset().load_state_dict(torch.load(data_path.joinpath(test_file), map_location=device))
 
     embedding_model = nn.Embedding(vocab_size, input_dim)
-    embedding_model.load_state_dict(torch.load(data_path.joinpath(embedding_file)))
+    embedding_model.load_state_dict(torch.load(data_path.joinpath(embedding_file), map_location=device))
     print("Embedding model loaded")
 
     model = TreeLSTMSentiment(
@@ -55,14 +55,14 @@ def load_tree_lstm():
     return embedding_model, model, train_dataset, dev_dataset, test_dataset
 
 
-def load_math_model(max_ops=5, dataset_size=10000):
+def load_math_model(device, max_ops=5, dataset_size=10000):
     dataset_file = f"math_equations_{max_ops}.pth"
 
     data_path = get_saved_data_path()
     if not data_path.joinpath(dataset_file).exists():
         create_pth_file(max_ops, dataset_size)
 
-    dataset = torch.load(data_path.joinpath(dataset_file))
+    dataset = torch.load(data_path.joinpath(dataset_file), map_location=device)
 
     if dataset_size > len(dataset):
         warnings.warn(f"Requested dataset size ({dataset_size}) is larger than cached dataset ({len(dataset)})")
