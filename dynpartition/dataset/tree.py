@@ -51,7 +51,7 @@ class Tree:
     def size(self) -> int:
         count = 1
         for i in range(self.num_children):
-            count += self.children[i].size
+            count += self.children[i].size()
         return count
 
     def depth(self) -> int:
