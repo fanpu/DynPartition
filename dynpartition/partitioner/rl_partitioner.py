@@ -1,23 +1,21 @@
 # TODO: Fanpu
 
-import torch.nn as nn
-import torch
-import tqdm
-import numpy as np
-import matplotlib.pyplot as plt
-import timeit
-from dqn import DQN_Agent
-from scheduler_env import SchedulerEnv
-from torchvision.models.resnet import ResNet, Bottleneck
 import os
 import sys
+import timeit
 
-if True:
-    current = os.path.dirname(os.path.realpath(__file__))
-    parent = os.path.dirname(current)
-    sys.path.append(parent)
-    from get_dir import get_plot_path
+import ipdb
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
+import tqdm
+from dqn import DQN_Agent
+from scheduler_env import SchedulerEnv
+from torchvision.models.resnet import Bottleneck, ResNet
 
+from dynpartition.get_dir import get_plot_path
+from dynpartition.dataset.load import load_tree_lstm
 
 num_batches = 3
 batch_size = 5  # 120
@@ -144,4 +142,8 @@ def main():
 
 
 if __name__ == '__main__':
+    ipdb.set_trace()
+    embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
+    pass
+
     main()

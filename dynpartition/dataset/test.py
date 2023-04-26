@@ -43,6 +43,8 @@ def test_tree_lstm(device: torch.device, model: TreeLSTMSentiment, embedding_mod
 
     for idx in tqdm(range(len(dataset)), desc=f'Testing ', ascii=True, mininterval=1):
         tree, inputs, _ = dataset[idx]
+        import ipdb
+        ipdb.set_trace()
         inputs = inputs.to(device)
 
         emb = torch.unsqueeze(embedding_model(inputs), 1)
@@ -61,7 +63,8 @@ def test_tree_lstm(device: torch.device, model: TreeLSTMSentiment, embedding_mod
 if __name__ == '__main__':
     print("Testing...")
     print()
-    device = torch.device("cuda" if (False and torch.cuda.is_available()) else "cpu")
+    device = torch.device("cuda" if (
+        False and torch.cuda.is_available()) else "cpu")
 
     model, dataset = load_math_model()
     model.to(device)
