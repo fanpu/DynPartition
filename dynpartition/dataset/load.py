@@ -3,9 +3,10 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from dynpartition.dataset.accuracy import sentiment_accuracy_score
+from dynpartition.dataset.generate_math_func import get_proper_math_tree
 from dynpartition.dataset.sst_dataset import SSTDataset
-from dynpartition.dataset.trainer import SentimentTrainer
+from dynpartition.dataset.test import test_tree_lstm, test_math_model
+from dynpartition.models.MathFuncSolver import MathFuncSolver
 from dynpartition.models.TreeLSTM import TreeLSTMSentiment
 
 
@@ -59,15 +60,22 @@ def load_tree_lstm():
     return embedding_model, model, train_dataset, dev_dataset, test_dataset
 
 
+def load_math_model(dataset_size=1000, max_ops=5):
+    model = MathFuncSolver()
+    dataset = [get_proper_math_tree(max_ops) for _ in range(dataset_size)]
+    return model, dataset
+
+
 if __name__ == '__main__':
-    cuda = True and torch.cuda.is_available()
+    device = torch.device("cuda" if (True and torch.cuda.is_available()) else "cpu")
+
+    model, dataset = load_math_model()
+    model.to(device)
+    math_acc = test_math_model(device, model, dataset)
+    print(f"Math accuracy: {math_acc * 100:.4f}%")
+
     embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
-
-    if cuda:
-        model.cuda()
-        embedding_model.cuda()
-
-    trainer = SentimentTrainer(cuda, model, embedding_model)
-    dev_pred = trainer.test(dev_dataset)
-    dev_acc = sentiment_accuracy_score(dev_pred, dev_dataset.labels)
+    model.to(device)
+    embedding_model.to(device)
+    dev_acc = test_tree_lstm(device, model, embedding_model, dev_dataset)
     print(f"Dev accuracy: {dev_acc * 100:.4f}%")
