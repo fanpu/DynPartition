@@ -1,87 +1,22 @@
 # TODO: Fanpu
-import timeit
 
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
 import torch.nn as nn
-from torchvision.models.resnet import ResNet, Bottleneck
-
+import torch
+import tqdm
+import numpy as np
+import matplotlib.pyplot as plt
+import timeit
+from dqn import DQN_Agent
 from scheduler_env import SchedulerEnv
+from torchvision.models.resnet import ResNet, Bottleneck
+import os
+import sys
 
-num_classes = 1000
-
-DEVICE_0 = 'cuda:0'
-DEVICE_1 = 'cpu'
-DEVICES = [DEVICE_0, DEVICE_1]
-
-
-class ModelParallelResNet50(ResNet):
-    # Assume split between 2 devices
-    def __init__(self, partition_layer, *args, **kwargs):
-        """
-        Args:
-            partition_layer (int): The first layer [0-indexed] that 
-            the second device will start processing
-        """
-        super(ModelParallelResNet50, self).__init__(
-            block=Bottleneck,
-            layers=[3, 4, 6, 3],
-            num_classes=num_classes,
-            *args,
-            **kwargs
-        )
-
-        layers = [
-            self.conv1,
-            self.bn1,
-            self.relu,
-            self.maxpool,
-            self.layer1,
-            self.layer2,
-            self.layer3,
-            self.layer4,
-            self.avgpool,
-        ]
-        assert len(layers) > partition_layer > 0
-
-        self.seq1 = nn.Sequential(
-            *layers[:partition_layer]
-        ).to(DEVICE_0)
-
-        self.seq2 = nn.Sequential(
-            *layers[partition_layer:]
-        ).to(DEVICE_1)
-
-    def forward(self, x):
-        x = self.seq2(self.seq1(x).to(DEVICE_1))
-        return self.fc(x.view(x.size(0), -1))
-
-
-class PipelineParallelResNet50(ModelParallelResNet50):
-    def __init__(self, partition_layer, split_size=20, *args, **kwargs):
-        super(PipelineParallelResNet50,
-              self).__init__(partition_layer, *args, **kwargs)
-        self.split_size = split_size
-
-    def forward(self, x):
-        splits = iter(x.split(self.split_size, dim=0))
-        s_next = next(splits)
-        s_prev = self.seq1(s_next).to(DEVICE_1)
-        ret = []
-
-        for s_next in splits:
-            # A. ``s_prev`` runs on ``cpu``
-            s_prev = self.seq2(s_prev)
-            ret.append(self.fc(s_prev.view(s_prev.size(0), -1)))
-
-            # B. ``s_next`` runs on ``cuda:0``, which can run concurrently with A
-            s_prev = self.seq1(s_next).to(DEVICE_1)
-
-        s_prev = self.seq2(s_prev)
-        ret.append(self.fc(s_prev.view(s_prev.size(0), -1)))
-
-        return torch.cat(ret)
+if True:
+    current = os.path.dirname(os.path.realpath(__file__))
+    parent = os.path.dirname(current)
+    sys.path.append(parent)
+    from get_dir import get_plot_path
 
 
 num_batches = 3
@@ -164,18 +99,48 @@ def pipeline_parallelism():
 #      get_plot_path().joinpath('mp_vs_rn_vs_pp.png'))
 
 def main():
-    env = SchedulerEnv()
-    env.reset()
-    terminated = False
-    # i = 0
-    # j = 1
-    while not terminated:
-        # i += 1
-        # if i % 3 == 0:
-        #     j += 1
-        # print("Choosing action", j)
-        observation, reward, terminated, _, info = env.step(j)
-        print(reward)
+    num_seeds = 1
+    num_episodes = 100
+    num_test_episodes = 5
+    episodes_between_test = 5
+    l = num_episodes // episodes_between_test
+    res = np.zeros((num_seeds, l))
+    agent = DQN_Agent(SchedulerEnv())
+
+    reward_means = []
+    for i in tqdm.tqdm(range(num_seeds)):
+        for m in range(num_episodes):
+            print("m", m)
+            agent.train()
+            if m % episodes_between_test == 0:
+                print("Episode: {}".format(m))
+                G = np.zeros(20)
+                for k in range(num_test_episodes):
+                    g = agent.test()
+                    G[k] = g
+
+                reward_mean = G.mean()
+                reward_sd = G.std()
+                print("The test reward for episode {0} is {1} with sd of {2}.".format(
+                    m, reward_mean, reward_sd))
+                reward_means.append(reward_mean)
+
+        print(reward_means)
+        res[i] = np.array(reward_means)
+
+    ks = np.arange(l) * episodes_between_test
+    avs = np.mean(res, axis=0)
+    maxs = np.max(res, axis=0)
+    mins = np.min(res, axis=0)
+
+    plt.fill_between(ks, mins, maxs, alpha=0.1)
+    plt.plot(ks, avs, '-o', markersize=1)
+
+    plt.xlabel('Episode', fontsize=15)
+    plt.ylabel('Return', fontsize=15)
+
+    plt.title("DynPartition Learning Curve", fontsize=24)
+    plt.savefig(get_plot_path().joinpath("dynpartition_learning_curve.png"))
 
 
 if __name__ == '__main__':

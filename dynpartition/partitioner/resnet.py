@@ -38,6 +38,10 @@ class ModelParallelResNet50(ResNet):
             self.layer4,
             self.avgpool,
         ]
+
+        if partition_layer == 0:
+            partition_layer += 1
+
         assert len(layers) > partition_layer > 0
 
         self.seq1 = nn.Sequential(
@@ -55,7 +59,8 @@ class ModelParallelResNet50(ResNet):
 
 class PipelineParallelResNet50(ModelParallelResNet50):
     def __init__(self, partition_layer, split_size=20, *args, **kwargs):
-        super(PipelineParallelResNet50, self).__init__(partition_layer, *args, **kwargs)
+        super(PipelineParallelResNet50, self).__init__(
+            partition_layer, *args, **kwargs)
         self.split_size = split_size
 
     def forward(self, x):

@@ -5,15 +5,13 @@ import argparse
 import collections
 import os
 import sys
-
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import tqdm
 from torch import tensor
-
-from dynpartition.get_dir import get_plot_path
+from gym.wrappers import FlattenObservation
 
 
 class FullyConnectedModel(torch.nn.Module):
@@ -87,9 +85,6 @@ class Replay_Memory():
         # Burn in episodes define the number of episodes that are written into the memory from the
         # randomly initialized agent. Memory size is the maximum size after which old elements in the memory are replaced.
         # A simple (if not the most efficient) was to implement the memory is as a list of transitions.
-
-        # Hint: you might find this useful:
-        # 		collections.deque(maxlen=memory_size)
         self.memory = collections.deque(maxlen=memory_size)
         self.burn_in = burn_in
 
@@ -109,29 +104,16 @@ class Replay_Memory():
 
 
 class DQN_Agent():
-
-    # In this class, we will implement functions to do the following.
-    # (1) Create an instance of the Q Network class.
-    # (2) Create a function that constructs a policy from the Q values predicted by the Q Network.
-    #		(a) Epsilon Greedy Policy.
-    # 		(b) Greedy Policy.
-    # (3) Create a function to train the Q Network, by interacting with the environment.
-    # (4) Create a function to test the Q Network's performance on the environment.
-    # (5) Create a function for Experience Replay.
-
-    def __init__(self, environment_name, render=False):
-
+    def __init__(self, env, render=False):
         # Create an instance of the network itself, as well as the memory.
-        # Here is also a good place to set environmental parameters,
-        # as well as training parameters - number of episodes / iterations, etc.
         lr = 5e-4
-        self.env = gym.make(environment_name)
+        self.env = FlattenObservation(env)
         self.nA = self.env.action_space.n
         self.nS = self.env.observation_space.shape[0]
-        self.epsilon = 0.05
+        self.epsilon = 0.5
         self.q_network = QNetwork(self.env, lr)
         self.replay = Replay_Memory()
-        self.burn_in_memory()
+        # self.burn_in_memory()
         self.E = 200
         self.N = 32
         self.gamma = 0.99
@@ -141,6 +123,7 @@ class DQN_Agent():
     def epsilon_greedy_policy(self, q_values):
         # Creating epsilon greedy probabilities to sample from.
         with torch.no_grad():
+            print(q_values)
             if np.random.rand() < self.epsilon:
                 # Random policy
                 return np.random.choice(len(q_values))
@@ -221,38 +204,11 @@ class DQN_Agent():
         state = self.env.reset()
         for i in range(10000):
             action = np.random.choice(self.nA)
-            new_state, reward, done, truncated, info = self.env.step(action)
+            new_state, reward, done, info = self.env.step(action)
             self.replay.append((state, action, reward, new_state, done))
             state = new_state
             if done:
                 state = self.env.reset()
-
-
-# Note: if you have problems creating video captures on servers without GUI,
-#       you could save and relaod model to create videos on your laptop.
-def test_video(agent, env, epi):
-    # Usage:
-    # 	you can pass the arguments within agent.train() as:
-    # 		if episode % int(self.num_episodes/3) == 0:
-    #       	test_video(self, self.environment_name, episode)
-    save_path = "./videos-%s-%s" % ("cartpole", epi)
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
-    # To create video
-    env = gym.wrappers.Monitor(agent.env, save_path, force=True)
-    reward_total = []
-    state = env.reset()
-    done = False
-    while not done:
-        env.render()
-        action = agent.epsilon_greedy_policy(
-            agent.q_network.model(tensor(state)))
-        # action = agent.epsilon_greedy_policy(state, 0.05)
-        next_state, reward, done, info = env.step(action)
-        state = next_state
-        reward_total.append(reward)
-    print("reward_total: {}".format(np.sum(reward_total)))
-    agent.env.close()
 
 
 def parse_arguments():
@@ -273,7 +229,7 @@ def main(args):
     # You want to create an instance of the DQN_Agent class here, and then train / test it.
 
     num_seeds = 5
-    num_episodes = 200
+    num_episodes = 20
     l = num_episodes // 10
     res = np.zeros((num_seeds, l))
     num_test_episodes = 20

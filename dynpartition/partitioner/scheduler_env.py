@@ -2,7 +2,9 @@ import timeit
 
 import gym
 import numpy as np
+import torch
 from gym import spaces
+from resnet import PipelineParallelResNet50
 
 batch_size = 30  # 120
 image_w = 128
@@ -13,7 +15,7 @@ DEVICES = [DEVICE_0, DEVICE_1]
 
 
 class SchedulerEnv(gym.Env):
-    num_batches = 24
+    num_batches = 1
     num_repeat = 1  # increase for variance reduction when computing rewards
 
     """
@@ -32,7 +34,9 @@ class SchedulerEnv(gym.Env):
 
         # Blind right now
         self.observation_space = spaces.Dict(
-            {}
+            {
+                "batch_size": spaces.Box(low=0, high=100, shape=())
+            }
         )
 
         # Where to split the network
@@ -52,10 +56,11 @@ class SchedulerEnv(gym.Env):
         self.clock = None
 
     def _get_obs(self):
-        return {}
+        # Might want to make this adaptive
+        return {"batch_size": batch_size}
 
     def _get_info(self):
-        return {}
+        return None
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
@@ -66,12 +71,13 @@ class SchedulerEnv(gym.Env):
         self.prev_model = None  # Cache prev model
 
         observation = self._get_obs()
-        info = self._get_info()
 
-        return observation, info
+        return observation
 
     def step(self, action):
         assert self.current_batch < self.num_batches
+
+        print("Chose action", action)
 
         partition_layer = action
         self.current_batch += 1
@@ -95,4 +101,4 @@ outputs = model(inputs.to(DEVICE_0))"""
         if self.render_mode == "human":
             self._render_frame()
 
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, info
