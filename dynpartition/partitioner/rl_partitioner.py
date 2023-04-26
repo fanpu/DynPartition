@@ -161,7 +161,7 @@ def pipeline_parallelism():
 # plot([mp_mean, sg_mean, pp_mean],
 #      [mp_std, sg_std, pp_std],
 #      ['Model Parallel', 'Single GPU', 'Pipelining Model Parallel'],
-#      'mp_vs_rn_vs_pp.png')
+#      get_plot_path().joinpath('mp_vs_rn_vs_pp.png'))
 
 def main():
     env = SchedulerEnv()

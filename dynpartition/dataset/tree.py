@@ -14,12 +14,12 @@ class Tree:
 
     # used by Math Functions only
     layer: Optional[str] = None  # layer of the node in the tree
-    name: Optional[str] = None  # name of the node
+    name: Optional[str] = None  # name of the node in the tree
 
     # runtime
     parent: Optional[Tree] = None
     state: Union[None, Tuple[torch.Tensor, ...]] = None
-    output: Optional[int] = None  # output node for SST
+    output: Optional[int] = None
 
     @property
     def num_children(self):

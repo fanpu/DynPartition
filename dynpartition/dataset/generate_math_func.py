@@ -102,7 +102,7 @@ def create_pth_file(num_ops=5, dataset_size=10000):
     folder = Path(__file__)
     while folder.name != 'dynpartition':
         folder = folder.parent
-    torch.save(math_equations, folder.joinpath('saved_data', f'math_equations_{num_ops}.pth'))
+    torch.save(math_equations, folder.joinpath('_saved_data', f'math_equations_{num_ops}.pth'))
     return math_equations
 
 

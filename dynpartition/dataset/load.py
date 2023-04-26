@@ -1,5 +1,4 @@
 import warnings
-from pathlib import Path
 
 import torch
 from torch import nn
@@ -7,18 +6,9 @@ from torch import nn
 from dynpartition.dataset.generate_math_func import create_pth_file
 from dynpartition.dataset.sst_dataset import SSTDataset
 from dynpartition.dataset.tree import Tree
+from dynpartition.get_dir import get_saved_data_path
 from dynpartition.models.MathFuncSolver import MathFuncSolver
 from dynpartition.models.TreeLSTM import TreeLSTMSentiment
-
-
-def get_saved_data_path():
-    data_folder = "saved_data"
-
-    base_path = Path(__file__)
-    while base_path.name != "dynpartition":
-        base_path = base_path.parent
-
-    return base_path.joinpath(data_folder)
 
 
 def load_tree_lstm():

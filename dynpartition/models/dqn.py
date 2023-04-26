@@ -13,6 +13,8 @@ import torch
 import tqdm
 from torch import tensor
 
+from dynpartition.get_dir import get_plot_path
+
 
 class FullyConnectedModel(torch.nn.Module):
 
@@ -219,7 +221,7 @@ class DQN_Agent():
         state = self.env.reset()
         for i in range(10000):
             action = np.random.choice(self.nA)
-            new_state, reward, done, info = self.env.step(action)
+            new_state, reward, done, truncated, info = self.env.step(action)
             self.replay.append((state, action, reward, new_state, done))
             state = new_state
             if done:
@@ -309,11 +311,8 @@ def main(args):
     plt.xlabel('Episode', fontsize=15)
     plt.ylabel('Return', fontsize=15)
 
-    if not os.path.exists('./plots'):
-        os.mkdir('./plots')
-
     plt.title("DQN Learning Curve", fontsize=24)
-    plt.savefig("./plots/dqn_curve.png")
+    plt.savefig(get_plot_path().joinpath("dqn_curve.png"))
 
 
 if __name__ == '__main__':
