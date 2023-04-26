@@ -59,7 +59,7 @@ class Vocab:
             return default
 
     # Mark this `label` and `idx` as special
-    def add_special(self, label, idx=None) -> Vocab:
+    def add_special(self, label) -> Vocab:
         idx = self.add(label)
         self.special += [idx]
         return self

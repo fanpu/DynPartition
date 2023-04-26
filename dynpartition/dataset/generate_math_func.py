@@ -1,8 +1,11 @@
 import math
+from pathlib import Path
 from random import choice, randint
 
 import sympy
+import torch
 from sympy.abc import x
+from tqdm import tqdm
 
 from dynpartition.dataset.tree import Tree
 
@@ -83,6 +86,24 @@ def get_proper_math_tree(num_ops):
             continue
 
         return tree
+
+
+def create_pth_file(num_ops=5, dataset_size=10000):
+    math_equations = []
+    for _ in tqdm(
+            range(dataset_size),
+            desc=f'Generating {dataset_size} math equations (num_ops={num_ops})',
+            ascii=True,
+            mininterval=1
+    ):
+        tree = get_proper_math_tree(num_ops)
+        math_equations.append(tree.state_dict())
+
+    folder = Path(__file__)
+    while folder.name != 'dynpartition':
+        folder = folder.parent
+    torch.save(math_equations, folder.joinpath('saved_data', f'math_equations_{num_ops}.pth'))
+    return math_equations
 
 
 if __name__ == '__main__':

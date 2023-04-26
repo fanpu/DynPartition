@@ -1,8 +1,9 @@
-# tree object from stanfordnlp/treelstm
 from __future__ import annotations
 
 import dataclasses
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
+
+import torch
 
 
 @dataclasses.dataclass
@@ -16,6 +17,9 @@ class Tree:
     # used by Math Functions only
     layer: Optional[str] = None  # layer of the node in the tree
     name: Optional[str] = None  # name of the node
+
+    # runtime
+    state: Union[None, Tuple[torch.Tensor, ...]] = None
 
     @property
     def num_children(self):
@@ -31,6 +35,10 @@ class Tree:
             "idx": self.idx,
             "gold_label": self.gold_label,
             "output": self.output,
+
+            # used by Math Functions only
+            "layer": self.layer,
+            "name": self.name,
         }
 
     def load_state_dict(self, state_dict):
@@ -41,6 +49,11 @@ class Tree:
         self.idx = state_dict["idx"]
         self.gold_label = state_dict["gold_label"]
         self.output = state_dict["output"]
+
+        # used by Math Functions only
+        self.layer = state_dict["layer"] if "layer" in state_dict else None
+        self.name = state_dict["name"] if "name" in state_dict else None
+
         return self
 
     def add_child(self, child) -> Tree:
