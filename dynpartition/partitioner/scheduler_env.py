@@ -14,7 +14,7 @@ DEVICES = [DEVICE_0, DEVICE_1]
 
 
 class SchedulerEnv(gym.Env):
-    num_batches = 10
+    num_batches = 24
     num_repeat = 1  # increase for variance reduction when computing rewards
 
     """

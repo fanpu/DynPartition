@@ -163,8 +163,14 @@ def main():
     env = SchedulerEnv()
     env.reset()
     terminated = False
+    # i = 0
+    # j = 1
     while not terminated:
-        observation, reward, terminated, _, info = env.step(8)
+        # i += 1
+        # if i % 3 == 0:
+        #     j += 1
+        # print("Choosing action", j)
+        observation, reward, terminated, _, info = env.step(j)
         print(reward)
 
 
