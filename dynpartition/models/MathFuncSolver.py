@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from dynpartition.dataset.generate_math_func import STRING_BINARY_OPS, get_proper_math_tree
+from dynpartition.dataset.generate_math_func import STRING_BINARY_OPS, \
+    get_proper_math_tree
 from dynpartition.dataset.tree import Tree
 
 
@@ -64,7 +65,9 @@ class BinaryTreeMath(nn.Module):
                 self.forward(child)
 
             # Non-leaf Module
-            states = sum([(tree.layer,)] + [child.state for child in tree.children], ())
+            states = sum(
+                [(tree.layer,)] + [child.state for child in tree.children], ()
+            )
             tree.state = self.composer.forward(*states)
 
         # Output Module
@@ -86,7 +89,10 @@ if __name__ == '__main__':
     math_func_solver = MathFuncSolver()
     math_func_solver.eval()
     exp_tree = get_proper_math_tree(10)
-    inputs_of_tree = torch.tensor(exp_tree.get_leaf_values(set_idx=True, offset=1))
-    r = math_func_solver(exp_tree, inputs_of_tree)
+    tree_inputs = torch.tensor(exp_tree.get_leaf_values(set_idx=True, offset=1))
+    results = math_func_solver(exp_tree, tree_inputs)
 
-    assert torch.isclose(torch.tensor(exp_tree.gold_label, dtype=torch.float), r)
+    assert torch.isclose(
+        torch.tensor(exp_tree.gold_label, dtype=torch.float),
+        results
+    )

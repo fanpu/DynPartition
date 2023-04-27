@@ -1,4 +1,3 @@
-import ipdb
 import math
 import time
 from pathlib import Path
@@ -14,7 +13,12 @@ from dynpartition.get_dir import get_plot_path
 
 
 class TreeNodesEncoding(nn.Module):
-    def __init__(self, max_nodes: int = 200, dropout: float = 0, depth: Optional[int] = None):
+    def __init__(
+            self,
+            max_nodes: int = 200,
+            dropout: float = 0,
+            depth: Optional[int] = None
+    ):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
         self.max_nodes = max_nodes
@@ -25,8 +29,9 @@ class TreeNodesEncoding(nn.Module):
         position = torch.arange(self.max_nodes).unsqueeze(1)
         position_encoding = torch.zeros(self.max_nodes, self.depth)
 
-        div_term = torch.exp(torch.arange(
-            0, self.depth, 2) * (-3.5 / self.depth))
+        div_term = torch.exp(
+            torch.arange(0, self.depth, 2) * (-3.5 / self.depth)
+        )
 
         position_encoding[:, 0::2] = torch.sin(position * div_term)
         position_encoding[:, 1::2] = torch.cos(position * div_term)
@@ -63,7 +68,11 @@ class TreeNodesEncoding(nn.Module):
         return self.dropout(te)
 
 
-def encode_tree(tree: Tree, order: str = "in-order", padding: Optional[int] = None) -> np.ndarray:
+def encode_tree(
+        tree: Tree,
+        order: str = "in-order",
+        padding: Optional[int] = None
+) -> np.ndarray:
     if order == "in-order":
         node_list = tree.in_order()
     elif order == "pre-order":
@@ -76,15 +85,21 @@ def encode_tree(tree: Tree, order: str = "in-order", padding: Optional[int] = No
     node_ids = [id(node) for node in node_list]
     position = list(range(1, 1 + len(node_list)))
     depth = [node.depth_from_root_parent() for node in node_list]
-    parent = [(node_ids.index(id(node)) + 1 if node.parent is not None else 0)
-              for node in node_list]
+    parent = [
+        (node_ids.index(id(node)) + 1 if node.parent is not None else 0)
+        for node in node_list
+    ]
     is_leaf = [int(node.is_leaf()) for node in node_list]
 
     matrix = np.array([position, depth, parent, is_leaf], dtype=np.int32)
 
     if padding is not None and len(node_list) < padding:
-        matrix = np.pad(matrix, ((0, 0), (0, padding - len(node_list))),
-                        mode="constant", constant_values=0)
+        matrix = np.pad(
+            matrix,
+            ((0, 0), (0, padding - len(node_list))),
+            mode="constant",
+            constant_values=0
+        )
 
     return matrix
 
@@ -99,10 +114,14 @@ def create_tree_embedding_dataset(
     if padding is None:
         padding = max([tree.size() for tree in trees]) + 1
 
-    matrix_of_trees = [encode_tree(
-        tree, order=order, padding=padding) for tree in trees]
-    matrix_of_trees = [torch.tensor(matrix, dtype=torch.long)
-                       for matrix in matrix_of_trees]
+    matrix_of_trees = [
+        encode_tree(tree, order=order, padding=padding)
+        for tree in trees
+    ]
+    matrix_of_trees = [
+        torch.tensor(matrix, dtype=torch.long)
+        for matrix in matrix_of_trees
+    ]
 
     encoder = TreeNodesEncoding(max_nodes=padding)
     if plot:
@@ -116,19 +135,33 @@ def create_tree_embedding_dataset(
 
 
 if __name__ == '__main__':
-    device = torch.device("cuda" if (
-        False and torch.cuda.is_available()) else "cpu")
+    device = torch.device(
+        "cuda" if (False and torch.cuda.is_available()) else "cpu"
+    )
     _, dataset = load_math_model(device)
     _, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
 
     start_time = time.time()
     print(encode_tree(dataset[0], order="in-order"))
     print(create_tree_embedding_dataset([dataset[0]])[0])
-    _ = create_tree_embedding_dataset(dataset, name="math_model", plot=True)
     _ = create_tree_embedding_dataset(
-        train_dataset.trees, name="train_sst", plot=True)
+        dataset,
+        name="math_model",
+        plot=True
+    )
     _ = create_tree_embedding_dataset(
-        dev_dataset.trees, name="dev_sst", plot=True)
+        train_dataset.trees,
+        name="train_sst",
+        plot=True
+    )
     _ = create_tree_embedding_dataset(
-        test_dataset.trees, name="test_sst", plot=True)
+        dev_dataset.trees,
+        name="dev_sst",
+        plot=True
+    )
+    _ = create_tree_embedding_dataset(
+        test_dataset.trees,
+        name="test_sst",
+        plot=True
+    )
     print(f"Time: {time.time() - start_time:.2f}s")

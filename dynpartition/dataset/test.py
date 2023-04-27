@@ -37,7 +37,9 @@ def test_tree_lstm(model: TreeLSTMSentiment, dataset: SSTDataset):
     model.eval()
     predictions = torch.zeros(len(dataset))
 
-    for idx in tqdm(range(len(dataset)), desc=f'Testing ', ascii=True, mininterval=1):
+    for idx in tqdm(
+            range(len(dataset)), desc=f'Testing ', ascii=True, mininterval=1
+    ):
         tree = dataset.trees[idx]
 
         output = model(tree)  # size(1,5)
@@ -57,7 +59,9 @@ if __name__ == '__main__':
     # lovely_tensors.monkey_patch()
     print("Testing...")
     print()
-    device = torch.device("cuda" if (False and torch.cuda.is_available()) else "cpu")
+    device = torch.device(
+        "cuda" if (False and torch.cuda.is_available()) else "cpu"
+    )
 
     model, dataset = load_math_model(device)
     model.to(device)

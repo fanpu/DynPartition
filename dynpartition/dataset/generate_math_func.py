@@ -8,6 +8,7 @@ from sympy.abc import x
 from tqdm import tqdm
 
 from dynpartition.dataset.tree import Tree
+from dynpartition.get_dir import get_saved_data_path
 
 UNITARY_OPS = (
     sympy.sin,
@@ -95,7 +96,7 @@ def create_pth_file(num_ops=5, dataset_size=10000):
     math_equations = []
     for _ in tqdm(
             range(dataset_size),
-            desc=f'Generating {dataset_size} math equations (num_ops={num_ops})',
+            desc=f'Generating {dataset_size} equations (num_ops={num_ops})',
             ascii=True,
             mininterval=1
     ):
@@ -105,7 +106,10 @@ def create_pth_file(num_ops=5, dataset_size=10000):
     folder = Path(__file__)
     while folder.name != 'dynpartition':
         folder = folder.parent
-    torch.save(math_equations, folder.joinpath('_saved_data', f'math_equations_{num_ops}.pth'))
+    torch.save(
+        math_equations,
+        get_saved_data_path().joinpath(f'math_equations_{num_ops}.pth')
+    )
     return math_equations
 
 

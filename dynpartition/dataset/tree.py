@@ -44,7 +44,10 @@ class Tree:
         }
 
     def load_state_dict(self, state_dict):
-        self.children = [Tree().load_state_dict(child) for child in state_dict["children"]]
+        self.children = [
+            Tree().load_state_dict(child)
+            for child in state_dict["children"]
+        ]
         for child in self.children:
             child.parent = self
 
@@ -88,7 +91,10 @@ class Tree:
         elif self.layer is not None:
             return self.layer
         else:
-            return f"Tree: label={self.label}, value={self.value}, idx={self.idx}, children={self.num_children}"
+            return f"Tree: label={self.label}" \
+                   f", value={self.value}" \
+                   f", idx={self.idx}" \
+                   f", children={self.num_children}"
 
     def is_leaf(self):
         return self.num_children == 0

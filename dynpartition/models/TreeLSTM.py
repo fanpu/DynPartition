@@ -2,7 +2,8 @@
 # Branch: updates_for_python3_and_pytorch_2.0.0
 # Paper: https://arxiv.org/abs/1503.00075
 # Survey: https://arxiv.org/abs/2102.04906
-# Constituency Parsing vs Dependency Parsing: https://www.baeldung.com/cs/constituency-vs-dependency-parsing
+# Constituency Parsing vs Dependency Parsing:
+# https://www.baeldung.com/cs/constituency-vs-dependency-parsing
 
 import torch
 import torch.nn as nn
@@ -97,9 +98,13 @@ class BinaryTreeLSTM(nn.Module):
     def forward(self, tree: Tree):
         if tree.num_children == 0:
             # Leaf Module
-            value = torch.tensor(tree.value, device=self.embedding_model.weight.device)
+            value = torch.tensor(
+                tree.value,
+                device=self.embedding_model.weight.device
+            )
             x = torch.unsqueeze(self.embedding_model(value), 1).T
             tree.state = self.leaf_module.forward(x)
+
         else:
             for child in tree.children:
                 self.forward(child)
@@ -114,12 +119,27 @@ class BinaryTreeLSTM(nn.Module):
 
 
 class TreeLSTMSentiment(nn.Module):
-    def __init__(self, cuda, vocab_size, in_dim, mem_dim, num_classes, model_name, embedding_model):
+    def __init__(
+            self,
+            cuda,
+            vocab_size,
+            in_dim,
+            mem_dim,
+            num_classes,
+            model_name,
+            embedding_model
+    ):
         super(TreeLSTMSentiment, self).__init__()
         self.cudaFlag = cuda
         self.model_name = model_name
         self.vocab_size = vocab_size
-        self.tree_module = BinaryTreeLSTM(cuda, in_dim, mem_dim, num_classes, embedding_model)
+        self.tree_module = BinaryTreeLSTM(
+            cuda=cuda,
+            in_dim=in_dim,
+            mem_dim=mem_dim,
+            num_classes=num_classes,
+            embedding_model=embedding_model
+        )
 
     @property
     def leaf_module(self):

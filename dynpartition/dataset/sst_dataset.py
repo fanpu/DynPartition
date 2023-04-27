@@ -1,5 +1,5 @@
-import os
 from copy import deepcopy
+from pathlib import Path
 from typing import List, Tuple
 
 import torch
@@ -12,8 +12,16 @@ from dynpartition.dataset.vocab import Vocab
 
 
 class SSTDataset(data.Dataset):
-    def __init__(self, path=None, vocab=None, num_classes=3, fine_grain=0, model_name="constituency"):
+    def __init__(
+            self,
+            path=None,
+            vocab=None,
+            num_classes=3,
+            fine_grain=0,
+            model_name="constituency"
+    ):
         super(SSTDataset, self).__init__()
+        path = Path(path)
         if vocab is None:
             self.vocab = Vocab()
         else:
@@ -23,13 +31,11 @@ class SSTDataset(data.Dataset):
         self.model_name: str = model_name
 
         if path is not None:
-            temp_sentences = self.read_sentences(os.path.join(path, 'sents.toks'))
-            if self.model_name == "dependency":
-                temp_trees = self.read_trees(os.path.join(path, 'dparents.txt'), os.path.join(path, 'dlabels.txt'))
-            elif self.model_name == "constituency":
-                temp_trees = self.read_trees(os.path.join(path, 'parents.txt'), os.path.join(path, 'labels.txt'))
-            else:
-                raise Exception("Model name not found")
+            temp_sentences = self.read_sentences(path.joinpath('sents.toks'))
+            temp_trees = self.read_trees(
+                path.joinpath('parents.txt'),
+                path.joinpath('labels.txt')
+            )
         else:
             temp_sentences = []
             temp_trees = []
@@ -95,7 +101,10 @@ class SSTDataset(data.Dataset):
 
     def read_sentences(self, filename) -> List[torch.Tensor]:
         with open(filename, 'r', encoding="utf-8") as f:
-            sentences = [self.read_sentence(line) for line in tqdm(f.readlines(), ascii=True)]
+            sentences = [
+                self.read_sentence(line)
+                for line in tqdm(f.readlines(), ascii=True)
+            ]
         return sentences
 
     def read_sentence(self, line) -> torch.Tensor:
@@ -103,9 +112,14 @@ class SSTDataset(data.Dataset):
         return torch.tensor(indices).type(torch.long)
 
     def read_trees(self, filename_parents, filename_labels) -> List[Tree]:
-        parent = open(filename_parents, 'r', encoding="utf-8").readlines()  # parent node
-        label = open(filename_labels, 'r', encoding="utf-8").readlines()  # label node
-        trees = [self.read_tree(p_line, l_line) for p_line, l_line in tqdm(zip(parent, label), ascii=True)]
+        # parent node
+        parent = open(filename_parents, 'r', encoding="utf-8").readlines()
+        # label node
+        label = open(filename_labels, 'r', encoding="utf-8").readlines()
+        trees = [
+            self.read_tree(p_line, l_line)
+            for p_line, l_line in tqdm(zip(parent, label), ascii=True)
+        ]
         return trees
 
     def parse_dlabel_token(self, x):
@@ -130,8 +144,11 @@ class SSTDataset(data.Dataset):
         # FIXED: tree.idx, also tree dict() use base 1 as it was in dataset
         # parents is list base 0, keep idx-1
         # labels is list base 0, keep idx-1
-        # parents = map(int,line.split()) # split each number and turn to int
-        parents = list(map(int, line.split()))  # split each number and turn to int
+        # split each number and turn to int
+        # parents = map(int,line.split())
+
+        # split each number and turn to int
+        parents = list(map(int, line.split()))
         trees = dict()  # this is dict
         root = None
         # labels = map(self.parse_dlabel_token, label_line.split())
@@ -154,7 +171,8 @@ class SSTDataset(data.Dataset):
                     tree.add_child(prev)
 
                 trees[idx] = tree
-                # -1 remove -1 here to prevent embs[tree.idx -1] = -1 while tree.idx = 0
+                # -1 remove -1 here to prevent
+                # embs[tree.idx -1] = -1 while tree.idx = 0
                 tree.idx = idx
                 tree.gold_label = labels[idx - 1]  # add node label
                 # if trees[parent-1] is not None:

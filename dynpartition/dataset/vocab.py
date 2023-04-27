@@ -85,7 +85,13 @@ class Vocab:
 
     # Convert `labels` to indices. Use `unkWord` if not found.
     # Optionally insert `bosWord` at the beginning and `eosWord` at the .
-    def convert_to_idx(self, labels, unk_word, bos_word=None, eos_word=None) -> List[int]:
+    def convert_to_idx(
+            self,
+            labels,
+            unk_word,
+            bos_word=None,
+            eos_word=None
+    ) -> List[int]:
         vec = []
 
         if bos_word is not None:
@@ -99,7 +105,7 @@ class Vocab:
 
         return vec
 
-    # Convert `idx` to labels. If index `stop` is reached, convert it and return.
+    # Convert `idx` to labels. If index `stop` is reached, convert it and return
     def convert_to_labels(self, idx, stop) -> List[str]:
         labels = []
 

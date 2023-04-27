@@ -28,7 +28,9 @@ def load_tree_lstm(device):
     print("Loading TreeLSTM model...")
 
     vocab_size = 21699
-    # vocab_size = Vocab().load_state_dict(torch.load(data_path.joinpath(vocab_file))).size()
+    # vocab_size = Vocab().load_state_dict(
+    #     torch.load(data_path.joinpath(vocab_file))
+    # ).size()
     dev_dataset = SSTDataset().load_state_dict(
         torch.load(data_path.joinpath(dev_file), map_location=device)
     )
@@ -78,7 +80,9 @@ def load_math_model(device, max_ops=5, dataset_size=10000):
 
     if dataset_size > len(dataset):
         warnings.warn(
-            f"Requested dataset size ({dataset_size}) is larger than cached dataset ({len(dataset)})")
+            f"Requested dataset size ({dataset_size})"
+            f" is larger than cached dataset ({len(dataset)})"
+        )
     else:
         dataset = dataset[:dataset_size]
 
