@@ -13,7 +13,7 @@ from dynpartition.get_dir import get_plot_path
 
 
 class TreeNodesEncoding(nn.Module):
-    def __init__(self, max_nodes: int = 200, dropout: float = 0.1, depth: Optional[int] = None):
+    def __init__(self, max_nodes: int = 200, dropout: float = 0, depth: Optional[int] = None):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
         self.max_nodes = max_nodes
@@ -44,7 +44,9 @@ class TreeNodesEncoding(nn.Module):
         plt.ylabel('Position')
         plt.colorbar()
         plt.title('Positional Encoding')
-        filepath = get_plot_path().joinpath(f"{prefix}_positional_encoding.png")
+        if prefix:
+            prefix = f"{prefix}_" if prefix[-1] != "_" else prefix
+        filepath = get_plot_path().joinpath(f"{prefix}positional_encoding.png")
         plt.savefig(filepath, bbox_inches='tight', dpi=300)
         return filepath
 
@@ -73,8 +75,9 @@ def encode_tree(tree: Tree, order: str = "in-order", padding: Optional[int] = No
     position = list(range(1, 1 + len(node_list)))
     depth = [node.depth_from_root_parent() for node in node_list]
     parent = [(node_ids.index(id(node)) + 1 if node.parent is not None else 0) for node in node_list]
+    is_leaf = [int(node.is_leaf()) for node in node_list]
 
-    matrix = np.array([position, depth, parent])
+    matrix = np.array([position, depth, parent, is_leaf], dtype=np.int32)
 
     if padding is not None and len(node_list) < padding:
         matrix = np.pad(matrix, ((0, 0), (0, padding - len(node_list))), mode="constant", constant_values=0)
@@ -86,7 +89,8 @@ def create_tree_embedding_dataset(
         trees: List[Tree],
         order: str = "in-order",
         padding: Optional[int] = None,
-        name: str = ""
+        name: str = "",
+        plot: bool = False
 ) -> List[Tensor]:
     if padding is None:
         padding = max([tree.size() for tree in trees]) + 1
@@ -95,7 +99,8 @@ def create_tree_embedding_dataset(
     matrix_of_trees = [torch.tensor(matrix, dtype=torch.long) for matrix in matrix_of_trees]
 
     encoder = TreeNodesEncoding(max_nodes=padding)
-    encoder.plot_position_encoding(prefix=name)
+    if plot:
+        encoder.plot_position_encoding(prefix=name)
 
     encoded_trees = [
         encoder(matrix, tree_size=tree.size())
@@ -110,8 +115,10 @@ if __name__ == '__main__':
     _, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
 
     start_time = time.time()
-    _ = create_tree_embedding_dataset(dataset, name="math_model")
-    _ = create_tree_embedding_dataset(train_dataset.trees, name="train_sst")
-    _ = create_tree_embedding_dataset(dev_dataset.trees, name="dev_sst")
-    _ = create_tree_embedding_dataset(test_dataset.trees, name="test_sst")
+    print(encode_tree(dataset[0], order="in-order"))
+    print(create_tree_embedding_dataset([dataset[0]])[0])
+    _ = create_tree_embedding_dataset(dataset, name="math_model", plot=True)
+    _ = create_tree_embedding_dataset(train_dataset.trees, name="train_sst", plot=True)
+    _ = create_tree_embedding_dataset(dev_dataset.trees, name="dev_sst", plot=True)
+    _ = create_tree_embedding_dataset(test_dataset.trees, name="test_sst", plot=True)
     print(f"Time: {time.time() - start_time:.2f}s")

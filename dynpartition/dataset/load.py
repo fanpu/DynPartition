@@ -43,7 +43,7 @@ def load_tree_lstm(device):
     embedding_model.load_state_dict(
         torch.load(data_path.joinpath(embedding_file), map_location=device)
     )
-    print("Embedding model loaded")
+    print("Embedding model loaded!!")
 
     model = TreeLSTMSentiment(
         cuda=False,
@@ -58,7 +58,7 @@ def load_tree_lstm(device):
         torch.load(data_path.joinpath(model_file), map_location=device),
         strict=False,
     )
-    print("Model loaded")
+    print("Model loaded!!")
     model.tree_module.embedding_model = embedding_model
 
     embedding_model.eval()
