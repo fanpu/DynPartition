@@ -21,7 +21,8 @@ class SSTDataset(data.Dataset):
             model_name="constituency"
     ):
         super(SSTDataset, self).__init__()
-        path = Path(path)
+        if path is not None:
+            path = Path(path)
         if vocab is None:
             self.vocab = Vocab()
         else:
@@ -58,7 +59,8 @@ class SSTDataset(data.Dataset):
         for i in range(0, len(self.trees)):
             labels.append(self.trees[i].gold_label)
 
-        self.labels: torch.Tensor = torch.Tensor(labels)  # let labels be tensor
+        self.labels: torch.Tensor = torch.Tensor(
+            labels)  # let labels be tensor
         self.size: int = len(self.trees)
 
     def state_dict(self):
