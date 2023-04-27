@@ -5,10 +5,11 @@ import numpy as np
 import torch
 from gym import spaces
 from resnet import PipelineParallelResNet50
+from dynpartition.partitioner.partitioner_utils import device_id_to_device_string
+from dynpartition.dataset.load import load_tree_lstm
 
 batch_size = 30  # 120
-image_w = 128
-image_h = 128
+
 DEVICE_0 = 'cuda:0'
 DEVICE_1 = 'cpu'
 DEVICES = [DEVICE_0, DEVICE_1]
@@ -18,40 +19,31 @@ class SchedulerEnv(gym.Env):
     num_batches = 1
     num_repeat = 1  # increase for variance reduction when computing rewards
 
-    """
-    Current Assumptions: 2 devices
-    Action space is the choice of the split
-
-    Each step is just processing a batch, so this
-    could really be a single-epoch environment.
-    However let's retain this flexibility for now.
-    """
-
-    def __init__(self, render_mode=None):
+    def __init__(self, is_train=True, render_mode=None):
         # Do not support render_mode for now
 
-        self.num_layers = 9
+        embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(
+            device)
 
-        # Blind right now
+        if is_Train:
+            self.dataset = train_dataset
+            self.dataset_len = len(train_dataset)
+        else:
+            self.dataset = test_dataset
+            self.dataset_len = len(test_dataset)
+
+        # TODO: state will be the input
         self.observation_space = spaces.Dict(
             {
-                "batch_size": spaces.Box(low=0, high=100, shape=())
+                "input_tree": spaces.Box(low=0, high=100, shape=())
             }
         )
 
-        # Where to split the network
-        self.action_space = spaces.Discrete(self.num_layers - 1)
+        # Action space: Which GPU to assign the node to
+        self.action_space = spaces.Discrete(torch.cuda.device_count())
 
         assert render_mode is None
         self.render_mode = render_mode
-
-        """
-        If human-rendering is used, `self.window` will be a reference
-        to the window that we draw to. `self.clock` will be a clock that is used
-        to ensure that the environment is rendered at the correct framerate in
-        human-mode. They will remain `None` until human-mode is used for the
-        first time.
-        """
         self.window = None
         self.clock = None
 
@@ -66,9 +58,11 @@ class SchedulerEnv(gym.Env):
         # We need the following line to seed self.np_random
         # super().reset()
 
+        # TODO: sample a new input from our dataset
+        self.input = None
+        self.allocations = {}  # Determined allocations
         self.current_batch = 0
         self.prev_action = None
-        self.prev_model = None  # Cache prev model
 
         observation = self._get_obs()
 

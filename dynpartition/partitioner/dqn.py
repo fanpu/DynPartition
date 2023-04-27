@@ -164,6 +164,8 @@ class DQN_Agent():
         # transitions to memory, while also updating your model.
         state = self.env.reset()
         done = False
+
+        # TODO: change this to monte carlo updates with no discount on rewards
         while not done:
             action = self.epsilon_greedy_policy(
                 self.q_network.model(tensor(state)))
@@ -176,6 +178,7 @@ class DQN_Agent():
 
             self.q_network.optimizer.step()
 
+            # Update weights only every 50 steps to reduce stability issue of moving targets
             self.c += 1
             if self.c % 50 == 0:
                 self.q_network.target.load_state_dict(
