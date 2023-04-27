@@ -1,18 +1,24 @@
 import timeit
 
 import gym
+import ipdb
 import numpy as np
 import torch
 from gym import spaces
 from resnet import PipelineParallelResNet50
-from dynpartition.partitioner.partitioner_utils import device_id_to_device_string
+
+from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
+from dynpartition.partitioner.partitioner_utils import \
+    device_id_to_device_string
 
 batch_size = 30  # 120
 
 DEVICE_0 = 'cuda:0'
 DEVICE_1 = 'cpu'
 DEVICES = [DEVICE_0, DEVICE_1]
+
+MAX_NODES = 128
 
 
 class SchedulerEnv(gym.Env):
@@ -22,20 +28,26 @@ class SchedulerEnv(gym.Env):
     def __init__(self, is_train=True, render_mode=None):
         # Do not support render_mode for now
 
-        embedding_model, model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(
-            device)
+        device = torch.device("cuda" if (
+            True and torch.cuda.is_available()) else "cpu")
+        _, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+        encoded_trees = create_tree_embedding_dataset(
+            test_dataset.trees, padding=MAX_NODES, name="test_sst", plot=True)
 
-        if is_Train:
+        if is_train:
             self.dataset = train_dataset
             self.dataset_len = len(train_dataset)
         else:
             self.dataset = test_dataset
             self.dataset_len = len(test_dataset)
 
+        ipdb.set_trace()
         # TODO: state will be the input
+        self.observation_shape = encoded_trees[0].numpy().shape
         self.observation_space = spaces.Dict(
             {
-                "input_tree": spaces.Box(low=0, high=100, shape=())
+                "input_tree": spaces.Box(low=-np.ones(self.observation_shape),
+                                         high=np.ones(self.observation_shape), dtype=np.float16)
             }
         )
 
