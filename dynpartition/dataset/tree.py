@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import math
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -100,3 +101,41 @@ class Tree:
 
     def num_leaf_nodes(self):
         return len(self.get_leaf_nodes())
+
+    def in_order(self):
+        if self.is_leaf():
+            return [self]
+
+        if self.num_children == 1:
+            return self.children[0].in_order() + [self]
+
+        if self.num_children % 2 == 0:
+            first_half = self.children[:math.floor(self.num_children / 2)]
+            second_half = self.children[math.floor(self.num_children / 2):]
+            first_half = sum([child.in_order() for child in first_half], [])
+            second_half = sum([child.in_order() for child in second_half], [])
+            return first_half + [self] + second_half
+
+        if self.num_children % 2 == 1:
+            first_half = self.children[:math.floor(self.num_children / 2)]
+            second_half = self.children[math.floor(self.num_children / 2 + 1):]
+            first_half = sum([child.in_order() for child in first_half], [])
+            second_half = sum([child.in_order() for child in second_half], [])
+            return first_half + [self] + second_half
+
+    def post_order(self):
+        if self.is_leaf():
+            return [self]
+
+        return sum([child.post_order() for child in self.children], []) + [self]
+
+    def pre_order(self):
+        if self.is_leaf():
+            return [self]
+
+        return [self] + sum([child.pre_order() for child in self.children], [])
+
+    def depth_from_root_parent(self):
+        if self.parent is None:
+            return 0
+        return self.parent.depth_from_root_parent() + 1

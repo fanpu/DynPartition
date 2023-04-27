@@ -53,9 +53,8 @@ def test_tree_lstm(model: TreeLSTMSentiment, dataset: SSTDataset):
 
 
 if __name__ == '__main__':
-    import lovely_tensors
-
-    lovely_tensors.monkey_patch()
+    # import lovely_tensors
+    # lovely_tensors.monkey_patch()
     print("Testing...")
     print()
     device = torch.device("cuda" if (False and torch.cuda.is_available()) else "cpu")
