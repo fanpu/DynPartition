@@ -31,5 +31,8 @@ def tensors_to_device(
             for t in tensors
         )
     else:
-        return tensors.to(device)
+        if tensors.device != device:
+            return tensors.to(device=device)
+        else:
+            return tensors
 
