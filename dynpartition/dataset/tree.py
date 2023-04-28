@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 
 import torch
 
@@ -23,6 +23,8 @@ class Tree:
     state: Union[None, Tuple[torch.Tensor, ...]] = None
     output: Optional[int] = None
     traversal_index: Optional[int] = None
+    traversal_dict: Optional[Dict[int, Tree]] = None  # only defined for root
+    device: Optional[torch.device] = None  # device of node execution
 
     @property
     def num_children(self):
