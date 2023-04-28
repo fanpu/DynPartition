@@ -31,28 +31,29 @@ class SchedulerEnv(gym.Env):
         device = torch.device("cuda" if (
             True and torch.cuda.is_available()) else "cpu")
         _, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
-        encoded_trees = create_tree_embedding_dataset(
-            test_dataset.trees, padding=MAX_NODES, name="test_sst", plot=True)
 
         if is_train:
             self.dataset = train_dataset
             self.dataset_len = len(train_dataset)
+            self.encoded_trees = create_tree_embedding_dataset(
+                train_dataset.trees, padding=MAX_NODES, name="train_sst", plot=True)
         else:
             self.dataset = test_dataset
             self.dataset_len = len(test_dataset)
+            self.encoded_trees = create_tree_embedding_dataset(
+                test_dataset.trees, padding=MAX_NODES, name="test_sst", plot=True)
 
-        ipdb.set_trace()
-        # TODO: state will be the input
-        self.observation_shape = encoded_trees[0].numpy().shape
-        self.observation_space = spaces.Dict(
-            {
-                "input_tree": spaces.Box(low=-np.ones(self.observation_shape),
-                                         high=np.ones(self.observation_shape), dtype=np.float16)
-            }
-        )
+        self.obs_id = np.random.randint(low=0, high=self.dataset_len)
+        self.observation_shape = self.encoded_trees[0].numpy().shape
+        self.observation_space = spaces.Box(
+            low=-np.ones(self.observation_shape), high=np.ones(self.observation_shape))
+
+        self.max_nodes = self.observation_shape[0]
+        self.num_devices = torch.cuda.device_count() + 1
 
         # Action space: Which GPU to assign the node to
-        self.action_space = spaces.Discrete(torch.cuda.device_count())
+        self.action_space = spaces.MultiDiscrete(
+            [self.num_devices] * self.max_nodes)
 
         assert render_mode is None
         self.render_mode = render_mode
@@ -60,8 +61,7 @@ class SchedulerEnv(gym.Env):
         self.clock = None
 
     def _get_obs(self):
-        # Might want to make this adaptive
-        return {"batch_size": batch_size}
+        return self.encoded_trees[self.obs_id].reshape(-1,)
 
     def _get_info(self):
         return None
@@ -75,6 +75,7 @@ class SchedulerEnv(gym.Env):
         self.allocations = {}  # Determined allocations
         self.current_batch = 0
         self.prev_action = None
+        self.obs_id = np.random.randint(low=0, high=self.dataset_len)
 
         observation = self._get_obs()
 

@@ -53,10 +53,12 @@ class QNetwork():
         # Define your network architecture here. It is also a good idea to define any training operations
         # and optimizers here, initialize your variables, or alternately compile your model here.
         # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        nA = env.action_space.n
-        nS = env.observation_space.shape[0]
-        self.model = FullyConnectedModel(nS, nA)
-        self.target = FullyConnectedModel(nS, nA)
+        nA = env.action_space[0].n
+        nNodes = len(env.action_space)
+        nS = env.observation_space.shape[0] * env.observation_space.shape[1]
+        nA_total = nNodes * nA
+        self.model = FullyConnectedModel(nS, nA_total)
+        self.target = FullyConnectedModel(nS, nA_total)
         self.target.load_state_dict(self.model.state_dict())
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         # self.loss = torch.nn.MSELoss()
@@ -107,9 +109,13 @@ class DQN_Agent():
     def __init__(self, env, render=False):
         # Create an instance of the network itself, as well as the memory.
         lr = 5e-4
-        self.env = FlattenObservation(env)
-        self.nA = self.env.action_space.n
-        self.nS = self.env.observation_space.shape[0]
+        # self.env = FlattenObservation(env)
+        self.env = env
+        self.nNodes = len(env.action_space)
+        self.nA = self.env.action_space[0].n
+        self.nA_shape = (self.nNodes, self.nA)
+        self.nS = self.env.observation_space.shape[0] * \
+            self.env.observation_space.shape[1]
         self.epsilon = 0.5
         self.q_network = QNetwork(self.env, lr)
         self.replay = Replay_Memory()
