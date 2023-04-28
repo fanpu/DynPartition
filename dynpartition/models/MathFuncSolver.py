@@ -93,8 +93,8 @@ class MathFuncSolver(nn.Module):
         return self.tree_module.output_module
 
     @property
-    def embedding_model(self) -> nn.Embedding:
-        return self.tree_module.embedding_model
+    def embedding_model(self) -> None:
+        return None
 
     def forward(self, tree) -> torch.Tensor:
         return self.tree_module(tree)
