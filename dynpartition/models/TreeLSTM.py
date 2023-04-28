@@ -97,33 +97,24 @@ class BinaryTreeLSTM(nn.Module):
         self.composer = BinaryTreeComposer(cuda, in_dim, mem_dim)
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
-    def forward(self, tree: Tree, device_allocations: Optional[dict] = None):
+    def forward(self, tree: Tree):
         """
-        Device allocations: map from node traversal_index to device
+        s: map from node traversal_index to device
         """
         if tree.num_children == 0:
             # Leaf Module
             value = torch.tensor(
                 tree.value,
-                device=device_allocations[tree.traversal_index] if device_allocations else self.embedding_model.weight.device
+                device=self.embedding_model.weight.device
             )
             x = torch.unsqueeze(self.embedding_model(value), 1).T
             tree.state = self.leaf_module.forward(x)
 
         else:
             for child in tree.children:
-                self.forward(child, device_allocations=device_allocations)
+                self.forward(child)
 
-            # Non-leaf Module
-            # TODO: don't want to convert tensor with .to()
-            # if already on the same device
-            states = sum([child.state for child in tree.children],
-                         ())
-            states = tensors_to_device(
-                device_allocations[tree.traversal_index],
-                states
-            )
-            # .to(device_allocations[tree.idx])
+            states = sum([child.state for child in tree.children], ())
             tree.state = self.composer.forward(*states)
 
         # Output Module
@@ -170,5 +161,5 @@ class TreeLSTMSentiment(nn.Module):
     def embedding_model(self) -> nn.Embedding:
         return self.tree_module.embedding_model
 
-    def forward(self, tree, device_allocations: Optional[dict] = None):
-        return self.tree_module.forward(tree, device_allocations=device_allocations)
+    def forward(self, tree):
+        return self.tree_module.forward(tree)

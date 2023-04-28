@@ -38,12 +38,12 @@ class SchedulerEnv(gym.Env):
             self.dataset_len = len(train_dataset)
             self.encoded_trees = create_tree_embedding_dataset(
                 train_dataset.trees, max_num_nodes=MAX_NODES, name="train_sst",
-                set_traversal_index=True, plot=True)
+                set_traversal_index=True)
         else:
             self.dataset = test_dataset
             self.dataset_len = len(test_dataset)
             self.encoded_trees = create_tree_embedding_dataset(
-                test_dataset.trees, max_num_nodes=MAX_NODES, name="test_sst", plot=True)
+                test_dataset.trees, max_num_nodes=MAX_NODES, name="test_sst")
 
         self._gen_new_sample()
         self.observation_shape = self.encoded_trees[0].numpy().shape
