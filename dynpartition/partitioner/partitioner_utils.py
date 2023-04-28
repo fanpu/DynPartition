@@ -26,13 +26,7 @@ def tensors_to_device(
 
     if isinstance(tensors, Sequence):
         # noinspection PyTypeChecker
-        return tuple(
-            t.to(device=device) if t.device != device else t
-            for t in tensors
-        )
+        return tuple(t.to(device=device) for t in tensors)
     else:
-        if tensors.device != device:
-            return tensors.to(device=device)
-        else:
-            return tensors
+        return tensors.to(device=device)
 
