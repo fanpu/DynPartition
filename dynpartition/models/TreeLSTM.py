@@ -107,22 +107,14 @@ class BinaryTreeLSTM(nn.Module):
                 tree.value,
                 device=device_allocations[tree.traversal_index] if device_allocations else self.embedding_model.weight.device
             )
-            print("gg")
-            import ipdb
-            ipdb.set_trace()
             x = torch.unsqueeze(self.embedding_model(value), 1).T
-            print("hehe")
-            print(x.get_device())
             tree.state = self.leaf_module.forward(x)
-            print(tree.state.get_device())
 
         else:
             for child in tree.children:
                 self.forward(child, device_allocations=device_allocations)
 
             # Non-leaf Module
-            import ipdb
-            ipdb.set_trace()
             # TODO: don't want to convert tensor with .to()
             # if already on the same device
             states = sum([child.state for child in tree.children],
