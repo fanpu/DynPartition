@@ -30,7 +30,8 @@ class SchedulerEnv(gym.Env):
 
         device = torch.device("cuda" if (
             True and torch.cuda.is_available()) else "cpu")
-        _, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+        self.model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(
+            device)
 
         if is_train:
             self.dataset = train_dataset
@@ -82,9 +83,20 @@ class SchedulerEnv(gym.Env):
         return observation
 
     def step(self, action):
+        # Action should be 1d
+
         assert self.current_batch < self.num_batches
 
-        print("Chose action", action)
+        tree_size = self.dataset[self.obs_id][0].size
+        device_allocations = {}
+        # the tree indices range in [1, tree_size] inclusive
+        for idx, device_id in enumerate(action):
+            device_allocations[idx + 1] = device_id_to_device_string(device_id)
+
+        print("Chose allocation", device_allocations)
+
+        import ipdb
+        ipdb.set_trace()
 
         partition_layer = action
         self.current_batch += 1

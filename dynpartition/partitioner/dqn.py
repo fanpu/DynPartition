@@ -128,18 +128,21 @@ class DQN_Agent():
 
     def epsilon_greedy_policy(self, q_values):
         # Creating epsilon greedy probabilities to sample from.
+        q_values = q_values.reshape(self.nA_shape)
+        policy = np.zeros(self.nNodes)
         with torch.no_grad():
-            print(q_values)
-            if np.random.rand() < self.epsilon:
-                # Random policy
-                return np.random.choice(len(q_values))
-            else:
-                return np.argmax(q_values.numpy())
+            for node in range(self.nNodes):
+                if np.random.rand() < self.epsilon:
+                    # Random policy
+                    policy[node] = np.random.choice(self.nA)
+                else:
+                    policy[node] = np.argmax(q_values.numpy()[node])
+        return policy
 
     def greedy_policy(self, q_values):
         # Creating greedy policy for test time.
         with torch.no_grad():
-            return np.argmax(q_values.numpy())
+            return np.argmax(q_values.numpy(), axis=1)
 
     def compute_loss(self, minibatch):
         loss = 0
@@ -175,6 +178,8 @@ class DQN_Agent():
         while not done:
             action = self.epsilon_greedy_policy(
                 self.q_network.model(tensor(state)))
+            import ipdb
+            ipdb.set_trace()
             new_state, reward, done, info = self.env.step(action)
             self.replay.append((state, action, reward, new_state, done))
             minibatch = self.replay.sample_batch(self.N)

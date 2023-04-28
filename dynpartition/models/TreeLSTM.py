@@ -95,7 +95,10 @@ class BinaryTreeLSTM(nn.Module):
         self.composer = BinaryTreeComposer(cuda, in_dim, mem_dim)
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
-    def forward(self, tree: Tree):
+    def forward(self, tree: Tree, device_allocations=None):
+        """
+        Device allocations: map from node idx to device
+        """
         if tree.num_children == 0:
             # Leaf Module
             value = torch.tensor(
