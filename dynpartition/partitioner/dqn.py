@@ -16,7 +16,7 @@ from gym.wrappers import FlattenObservation
 
 class FullyConnectedModel(torch.nn.Module):
 
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size, output_size, output_shape):
         super().__init__()
 
         self.linear1 = torch.nn.Linear(input_size, 16)
@@ -27,6 +27,7 @@ class FullyConnectedModel(torch.nn.Module):
         self.activation3 = torch.nn.ReLU()
 
         self.output_layer = torch.nn.Linear(16, output_size)
+        self.output_shape = output_shape
         # no activation output layer
 
         # initialization
@@ -40,7 +41,7 @@ class FullyConnectedModel(torch.nn.Module):
         x = self.activation2(self.linear2(x))
         x = self.activation3(self.linear3(x))
         x = self.output_layer(x)
-        return x
+        return x.reshape(self.output_shape)
 
 
 class QNetwork():
@@ -50,18 +51,15 @@ class QNetwork():
     # and output Q values of the actions available to the agent as the output.
 
     def __init__(self, env, lr, logdir=None):
-        # Define your network architecture here. It is also a good idea to define any training operations
-        # and optimizers here, initialize your variables, or alternately compile your model here.
-        # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         nA = env.action_space[0].n
         nNodes = len(env.action_space)
         nS = env.observation_space.shape[0] * env.observation_space.shape[1]
         nA_total = nNodes * nA
-        self.model = FullyConnectedModel(nS, nA_total)
-        self.target = FullyConnectedModel(nS, nA_total)
+        self.nA_shape = (nNodes, nA)
+        self.model = FullyConnectedModel(nS, nA_total, self.nA_shape)
+        self.target = FullyConnectedModel(nS, nA_total, self.nA_shape)
         self.target.load_state_dict(self.model.state_dict())
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
-        # self.loss = torch.nn.MSELoss()
 
     def save_model_weights(self, suffix):
         # Helper function to save your model / weights.
@@ -128,7 +126,6 @@ class DQN_Agent():
 
     def epsilon_greedy_policy(self, q_values):
         # Creating epsilon greedy probabilities to sample from.
-        q_values = q_values.reshape(self.nA_shape)
         policy = np.zeros(self.nNodes)
         with torch.no_grad():
             for node in range(self.nNodes):
@@ -150,14 +147,9 @@ class DQN_Agent():
         q_predict = []
 
         for (state, action, reward, new_state, sample_done) in minibatch:
-            if sample_done:
-                y.append(reward)
-            else:
-                with torch.no_grad():
-                    y.append(
-                        reward + self.gamma *
-                        np.max(self.q_network.target(tensor(new_state)).detach().numpy()))
-            q_predict.append(self.q_network.model(tensor(state))[action])
+            y.append(reward)
+            q_predict.append(self.q_network.model(tensor(state))[
+                             torch.arange(len(action)), action].sum())
 
         for (yi, qi) in zip(y, q_predict):
             loss += torch.square(yi - qi)

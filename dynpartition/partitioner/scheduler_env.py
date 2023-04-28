@@ -10,13 +10,11 @@ from resnet import PipelineParallelResNet50
 from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
 from dynpartition.partitioner.partitioner_utils import \
-    device_id_to_device_string
+    device_id_to_device_string, device_id_to_device, ALL_DEVICES
+from dynpartition.partitioner.async_execution import test_model_with
 
 batch_size = 30  # 120
 
-DEVICE_0 = 'cuda:0'
-DEVICE_1 = 'cpu'
-DEVICES = [DEVICE_0, DEVICE_1]
 
 MAX_NODES = 128
 
@@ -66,7 +64,7 @@ class SchedulerEnv(gym.Env):
         self.obs_id = np.random.randint(low=0, high=self.dataset_len)
 
     def _get_obs(self):
-        return self.encoded_trees[self.obs_id].reshape(-1,)
+        return self.encoded_trees[self.obs_id].reshape(-1,).numpy()
 
     def _get_info(self):
         return None
@@ -75,13 +73,12 @@ class SchedulerEnv(gym.Env):
         # We need the following line to seed self.np_random
         # super().reset()
 
-        # TODO: sample a new input from our dataset
         self.input = None
         self.allocations = {}  # Determined allocations
         self.current_batch = 0
         self.prev_action = None
-        self._gen_new_sample()
 
+        self._gen_new_sample()
         observation = self._get_obs()
 
         return observation
@@ -93,30 +90,30 @@ class SchedulerEnv(gym.Env):
 
         tree_size = self.dataset[self.obs_id][0].size
         device_allocations = {}
-        # the tree indices range in [1, tree_size] inclusive
+
         for idx, device_id in enumerate(action):
             device_allocations[idx] = device_id_to_device_string(device_id)
 
-        print("Allocation:", device_allocations)
+        # print("Allocation:", device_allocations)
 
         self.current_batch += 1
 
         terminated = self.current_batch == self.num_batches
 
         tree = self.dataset.trees[self.obs_id]
-        output = self.model.forward(
-            tree, device_allocations=device_allocations)
+        for traversal_idx in range(tree.size()):
+            tree.traversal_dict[traversal_idx].device_for_state = device_id_to_device(
+                action[traversal_idx])
+            tree.traversal_dict[traversal_idx].device_for_output = device_id_to_device(
+                action[traversal_idx])
 
-        # TODO adapt below
-#         setup = f"""\
-# inputs = torch.randn(batch_size, 3, image_w, image_h)
-# model = PipelineParallelResNet50(partition_layer={partition_layer})"""
-#         stmt = f"""\
-# outputs = model(inputs.to(DEVICE_0))"""
-#         run_times = timeit.repeat(
-#             stmt, setup, number=1, repeat=self.num_repeat, globals=globals())
-#         mean, std = np.mean(run_times), np.std(run_times)
-        mean = 1337  # temp
+        def execute_forward():
+            test_model_with(self.model, dataset=[
+                            tree], devices=ALL_DEVICES, execution_strategy='async', with_tqdm=False)
+
+        run_times = timeit.repeat(
+            execute_forward, number=1, repeat=self.num_repeat, globals=globals())
+        mean, std = np.mean(run_times), np.std(run_times)
 
         reward = -mean
         self._gen_new_sample()

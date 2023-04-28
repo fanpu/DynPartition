@@ -98,7 +98,7 @@ def pipeline_parallelism():
 
 def main():
     num_seeds = 1
-    num_episodes = 100
+    num_episodes = 500
     num_test_episodes = 5
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
@@ -108,7 +108,6 @@ def main():
     reward_means = []
     for i in tqdm.tqdm(range(num_seeds)):
         for m in range(num_episodes):
-            print("m", m)
             agent.train()
             if m % episodes_between_test == 0:
                 print("Episode: {}".format(m))
@@ -138,7 +137,9 @@ def main():
     plt.ylabel('Return', fontsize=15)
 
     plt.title("DynPartition Learning Curve", fontsize=24)
-    plt.savefig(get_plot_path().joinpath("dynpartition_learning_curve.png"))
+    plot_path = get_plot_path().joinpath("dynpartition_learning_curve.png")
+    plt.savefig(plot_path)
+    print("Plot saved in", plot_path)
 
 
 if __name__ == '__main__':
