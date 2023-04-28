@@ -136,6 +136,7 @@ def test_model_with(
         dataset: List[Tree],
         devices: List[Union[str, torch.device]],
         execution_strategy: str = 'async',
+        with_tqdm: bool = True,
 ):
     if not isinstance(model, (MathFuncSolver, TreeLSTMSentiment)):
         raise TypeError(f'Unknown model type: {type(model)}')
@@ -156,12 +157,17 @@ def test_model_with(
         new_model.eval()
         models_dict[devices[i]] = new_model.to(devices[i])
 
-    for idx in tqdm(
-        range(len(dataset)),
-        desc=f'Testing {execution_strategy}',
-        ascii=True,
-        mininterval=0.5,
-    ):
+    if with_tqdm:
+        iterator = tqdm(
+            range(len(dataset)),
+            desc=f'Testing {execution_strategy}',
+            ascii=True,
+            mininterval=0.5,
+        )
+    else:
+        iterator = range(len(dataset))
+
+    for idx in iterator:
         tree = dataset[idx]
 
         for i in tree.get_all_nodes():

@@ -13,11 +13,24 @@ from dynpartition.models.TreeLSTM import TreeLSTMSentiment
 
 
 @torch.no_grad()
-def test_math_model(model: MathFuncSolver, dataset: List[Tree]):
+def test_math_model(
+        model: MathFuncSolver,
+        dataset: List[Tree],
+        with_tqdm: bool = True,
+):
     model.eval()
     predictions = torch.zeros(len(dataset))
 
-    for idx in tqdm(range(len(dataset)), desc=f'Testing ', ascii=True):
+    if with_tqdm:
+        iterator = tqdm(
+            range(len(dataset)),
+            desc=f'Testing ',
+            ascii=True,
+        )
+    else:
+        iterator = range(len(dataset))
+
+    for idx in iterator:
         tree = dataset[idx]
 
         output = model(tree)
@@ -33,13 +46,25 @@ def test_math_model(model: MathFuncSolver, dataset: List[Tree]):
 
 
 @torch.no_grad()
-def test_tree_lstm(model: TreeLSTMSentiment, dataset: SSTDataset):
+def test_tree_lstm(
+        model: TreeLSTMSentiment,
+        dataset: SSTDataset,
+        with_tqdm: bool = True,
+):
     model.eval()
     predictions = torch.zeros(len(dataset))
 
-    for idx in tqdm(
-            range(len(dataset)), desc=f'Testing ', ascii=True, mininterval=1
-    ):
+    if with_tqdm:
+        iterator = tqdm(
+            range(len(dataset)),
+            desc=f'Testing ',
+            ascii=True,
+            mininterval=1,
+        )
+    else:
+        iterator = range(len(dataset))
+
+    for idx in iterator:
         tree = dataset.trees[idx]
 
         output = model(tree)  # size(1,5)
