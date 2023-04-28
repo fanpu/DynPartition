@@ -11,7 +11,7 @@ from dynpartition.models.MathFuncSolver import MathFuncSolver
 from dynpartition.models.TreeLSTM import TreeLSTMSentiment
 
 
-def load_tree_lstm(device):
+def load_tree_lstm(device=torch.device("cpu")):
     num_classes = 3
     input_dim = 300
     mem_dim = 150
@@ -69,7 +69,7 @@ def load_tree_lstm(device):
     return model, train_dataset, dev_dataset, test_dataset
 
 
-def load_math_model(device, max_ops=5, dataset_size=10000):
+def load_math_model(device=torch.device("cpu"), max_ops=5, dataset_size=10000):
     dataset_file = f"math_equations_{max_ops}.pth"
 
     data_path = get_saved_data_path()
