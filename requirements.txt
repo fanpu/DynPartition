@@ -10,3 +10,5 @@ seaborn
 matplotlib~=3.7.1
 tqdm~=4.65.0
 sympy~=1.11.1
+ipdb~=0.13.13
+aiocells~=1.0.4
