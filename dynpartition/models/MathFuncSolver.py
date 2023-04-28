@@ -79,9 +79,24 @@ class MathFuncSolver(nn.Module):
     def __init__(self):
         super().__init__()
         self.tree_module = BinaryTreeMath()
-        self.output_module = self.tree_module.output_module
 
-    def forward(self, tree):
+    @property
+    def leaf_module(self) -> MathBinaryTreeLeafModule:
+        return self.tree_module.leaf_module
+
+    @property
+    def composer(self) -> MathBinaryTreeComposer:
+        return self.tree_module.composer
+
+    @property
+    def output_module(self) -> MathCheckModule:
+        return self.tree_module.output_module
+
+    @property
+    def embedding_model(self) -> nn.Embedding:
+        return self.tree_module.embedding_model
+
+    def forward(self, tree) -> torch.Tensor:
         return self.tree_module(tree)
 
 

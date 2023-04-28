@@ -154,19 +154,19 @@ class TreeLSTMSentiment(nn.Module):
         )
 
     @property
-    def leaf_module(self):
+    def leaf_module(self) -> BinaryTreeLeafModule:
         return self.tree_module.leaf_module
 
     @property
-    def composer(self):
+    def composer(self) -> BinaryTreeComposer:
         return self.tree_module.composer
 
     @property
-    def output_module(self):
+    def output_module(self) -> SentimentModule:
         return self.tree_module.output_module
 
     @property
-    def embedding_model(self):
+    def embedding_model(self) -> nn.Embedding:
         return self.tree_module.embedding_model
 
     def forward(self, tree, device_allocations: Optional[dict] = None):
