@@ -1,4 +1,4 @@
-from typing import Union, Tuple
+from typing import Union, Tuple, Sequence
 
 import torch
 
@@ -24,7 +24,7 @@ def tensors_to_device(
     if isinstance(device, str):
         device = torch.device(device)
 
-    if isinstance(tensors, tuple):
+    if isinstance(tensors, Sequence):
         # noinspection PyTypeChecker
         return tuple(
             t.to(device=device) if t.device != device else t

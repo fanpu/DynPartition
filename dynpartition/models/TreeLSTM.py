@@ -121,7 +121,7 @@ class BinaryTreeLSTM(nn.Module):
                          ())
             states = tensors_to_device(
                 device_allocations[tree.traversal_index],
-                *states
+                states
             )
             # .to(device_allocations[tree.idx])
             tree.state = self.composer.forward(*states)
