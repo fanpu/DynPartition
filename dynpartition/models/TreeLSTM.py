@@ -10,7 +10,7 @@ import torch.nn as nn
 from typing import Optional
 
 from dynpartition.dataset.tree import Tree
-from dynpartition.partitioner.partitioner_utils import move_tensor_unless_same_device
+from dynpartition.partitioner.partitioner_utils import tensors_to_device
 
 
 class BinaryTreeLeafModule(nn.Module):
@@ -119,11 +119,12 @@ class BinaryTreeLSTM(nn.Module):
             # if already on the same device
             states = sum([child.state for child in tree.children],
                          ())
-            states_moved = map(move_tensor_unless_same_device(
-                dest_device_id=device_allocations[tree.traversal_index]), states)
+            states = tensors_to_device(
+                device_allocations[tree.traversal_index],
+                *states
+            )
             # .to(device_allocations[tree.idx])
-            tree.state = self.composer.forward(
-                *states)
+            tree.state = self.composer.forward(*states)
 
         # Output Module
         tree.output = self.output_module.forward(*tree.state)

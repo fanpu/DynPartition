@@ -1,3 +1,5 @@
+from typing import Union, Tuple
+
 import torch
 
 
@@ -15,8 +17,19 @@ def device_ordinal_to_device_id(device_ordinal):
     return device_ordinal
 
 
-def move_tensor_unless_same_device(tensor, dest_device_id):
-    if device_ordinal_to_device_id(tensor.get_device()) == dest_device_id:
-        return tensor
+def tensors_to_device(
+        device: Union[str, torch.device],
+        tensors: Union[torch.Tensor, Tuple[torch.Tensor]],
+) -> Union[torch.Tensor, Tuple[torch.Tensor]]:
+    if isinstance(device, str):
+        device = torch.device(device)
+
+    if isinstance(tensors, tuple):
+        # noinspection PyTypeChecker
+        return tuple(
+            t.to(device=device) if t.device != device else t
+            for t in tensors
+        )
     else:
-        return tensor.to(device_id_to_device_string(dest_device_id))
+        return tensors.to(device)
+
