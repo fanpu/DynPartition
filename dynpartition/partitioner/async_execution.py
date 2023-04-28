@@ -165,6 +165,11 @@ def test_model_with(
         tree = dataset[idx]
 
         for i in tree.get_all_nodes():
+            if isinstance(i.device_for_state, str):
+                i.device_for_state = torch.device(i.device_for_state)
+            if isinstance(i.device_for_output, str):
+                i.device_for_output = torch.device(i.device_for_output)
+
             assert i.device_for_state in devices
             assert i.device_for_output in devices
 
