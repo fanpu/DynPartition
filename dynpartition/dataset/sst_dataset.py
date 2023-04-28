@@ -59,8 +59,8 @@ class SSTDataset(data.Dataset):
         for i in range(0, len(self.trees)):
             labels.append(self.trees[i].gold_label)
 
-        self.labels: torch.Tensor = torch.Tensor(
-            labels)  # let labels be tensor
+        # let labels be tensor
+        self.labels: torch.Tensor = torch.Tensor(labels)
         self.size: int = len(self.trees)
 
     def state_dict(self):

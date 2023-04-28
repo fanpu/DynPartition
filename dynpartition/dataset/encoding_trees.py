@@ -71,7 +71,8 @@ class TreeNodesEncoding(nn.Module):
 def encode_tree(
         tree: Tree,
         order: str = "in-order",
-        padding: Optional[int] = None
+        max_nodes: Optional[int] = None,
+        set_traversal_index: bool = False,
 ) -> np.ndarray:
     if order == "in-order":
         node_list = tree.in_order()
@@ -81,6 +82,10 @@ def encode_tree(
         node_list = tree.post_order()
     else:
         raise ValueError(f"Invalid order {order}.")
+
+    if set_traversal_index:
+        for i, node in enumerate(node_list):
+            node.traversal_index = i
 
     node_ids = [id(node) for node in node_list]
     position = list(range(1, 1 + len(node_list)))
@@ -93,10 +98,10 @@ def encode_tree(
 
     matrix = np.array([position, depth, parent, is_leaf], dtype=np.int32)
 
-    if padding is not None and len(node_list) < padding:
+    if max_nodes is not None and len(node_list) < max_nodes:
         matrix = np.pad(
             matrix,
-            ((0, 0), (0, padding - len(node_list))),
+            ((0, 0), (0, max_nodes - len(node_list))),
             mode="constant",
             constant_values=0
         )
@@ -107,15 +112,21 @@ def encode_tree(
 def create_tree_embedding_dataset(
         trees: List[Tree],
         order: str = "in-order",
-        padding: Optional[int] = None,
+        max_num_nodes: Optional[int] = None,
         name: str = "",
+        set_traversal_index: Optional[bool] = False,
         plot: bool = False
 ) -> List[Tensor]:
-    if padding is None:
-        padding = max([tree.size() for tree in trees]) + 1
+    if max_num_nodes is None:
+        max_num_nodes = max([tree.size() for tree in trees]) + 1
 
     matrix_of_trees = [
-        encode_tree(tree, order=order, padding=padding)
+        encode_tree(
+            tree,
+            order=order,
+            max_nodes=max_num_nodes,
+            set_traversal_index=set_traversal_index
+        )
         for tree in trees
     ]
     matrix_of_trees = [
@@ -123,7 +134,7 @@ def create_tree_embedding_dataset(
         for matrix in matrix_of_trees
     ]
 
-    encoder = TreeNodesEncoding(max_nodes=padding)
+    encoder = TreeNodesEncoding(max_nodes=max_num_nodes)
     if plot:
         encoder.plot_position_encoding(prefix=name)
 
@@ -146,22 +157,22 @@ if __name__ == '__main__':
     print(create_tree_embedding_dataset([dataset[0]])[0])
     _ = create_tree_embedding_dataset(
         dataset,
+        set_traversal_index=True,
         name="math_model",
-        plot=True
     )
     _ = create_tree_embedding_dataset(
         train_dataset.trees,
+        set_traversal_index=True,
         name="train_sst",
-        plot=True
     )
     _ = create_tree_embedding_dataset(
         dev_dataset.trees,
+        set_traversal_index=True,
         name="dev_sst",
-        plot=True
     )
     _ = create_tree_embedding_dataset(
         test_dataset.trees,
+        set_traversal_index=True,
         name="test_sst",
-        plot=True
     )
     print(f"Time: {time.time() - start_time:.2f}s")

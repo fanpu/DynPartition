@@ -22,6 +22,7 @@ class Tree:
     parent: Optional[Tree] = None
     state: Union[None, Tuple[torch.Tensor, ...]] = None
     output: Optional[int] = None
+    traversal_index: Optional[int] = None
 
     @property
     def num_children(self):
@@ -108,7 +109,7 @@ class Tree:
     def num_leaf_nodes(self):
         return len(self.get_leaf_nodes())
 
-    def in_order(self):
+    def in_order(self) -> List[Tree]:
         if self.is_leaf():
             return [self]
 
@@ -129,13 +130,13 @@ class Tree:
             second_half = sum([child.in_order() for child in second_half], [])
             return first_half + [self] + second_half
 
-    def post_order(self):
+    def post_order(self) -> List[Tree]:
         if self.is_leaf():
             return [self]
 
         return sum([child.post_order() for child in self.children], []) + [self]
 
-    def pre_order(self):
+    def pre_order(self) -> List[Tree]:
         if self.is_leaf():
             return [self]
 

@@ -97,7 +97,7 @@ class BinaryTreeLSTM(nn.Module):
 
     def forward(self, tree: Tree, device_allocations=None):
         """
-        Device allocations: map from node idx to device
+        Device allocations: map from node traversal_index to device
         """
         if tree.num_children == 0:
             # Leaf Module
