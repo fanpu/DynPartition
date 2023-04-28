@@ -64,10 +64,10 @@ def sync_tree_execution(
         tree: Tree,
         model_dict: Dict[torch.device, TREE_MODELS],
 ) -> torch.Tensor:
-    nodes = tree.topological_sort()
-    for node in nodes:
+    for node in tree.topological_sort():
         state_model = model_dict[node.device_for_state]
         output_model = model_dict[node.device_for_output]
+
         if node.is_leaf():
             execute_leaf(
                 node=node,
