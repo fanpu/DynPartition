@@ -95,7 +95,7 @@ class BinaryTreeLSTM(nn.Module):
         self.composer = BinaryTreeComposer(cuda, in_dim, mem_dim)
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
-    def forward(self, tree: Tree, device_allocations=None):
+    def forward(self, tree: Tree, device_allocation=None):
         """
         Device allocations: map from node traversal_index to device
         """
@@ -103,7 +103,7 @@ class BinaryTreeLSTM(nn.Module):
             # Leaf Module
             value = torch.tensor(
                 tree.value,
-                device=self.embedding_model.weight.device
+                device=device_allocation[tree.idx] if device_allocation else self.embedding_model.weight.device
             )
             x = torch.unsqueeze(self.embedding_model(value), 1).T
             tree.state = self.leaf_module.forward(x)
@@ -114,7 +114,8 @@ class BinaryTreeLSTM(nn.Module):
 
             # Non-leaf Module
             states = sum([child.state for child in tree.children], ())
-            tree.state = self.composer.forward(*states)
+            tree.state = self.composer.forward(
+                *states).to(device_allocation[tree.idx])
 
         # Output Module
         tree.output = self.output_module.forward(*tree.state)
