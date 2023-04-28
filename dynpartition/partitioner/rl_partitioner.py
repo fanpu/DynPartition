@@ -98,7 +98,7 @@ def pipeline_parallelism():
 
 def main():
     num_seeds = 1
-    num_episodes = 500
+    num_episodes = 1000
     num_test_episodes = 5
     episodes_between_test = 5
     l = num_episodes // episodes_between_test

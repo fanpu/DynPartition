@@ -38,3 +38,8 @@ def tensors_to_device(
         return tuple(t.to(device=device) for t in tensors)
     else:
         return tensors.to(device=device)
+
+
+def allocation_summary(device_allocations):
+    inv_list = {v: k for k, v in device_allocations.items()}.items()
+    print("Device allocations", inv_list)

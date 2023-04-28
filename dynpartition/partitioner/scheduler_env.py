@@ -10,18 +10,16 @@ from resnet import PipelineParallelResNet50
 from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
 from dynpartition.partitioner.partitioner_utils import \
-    device_id_to_device_string, device_id_to_device, ALL_DEVICES
+    device_id_to_device_string, device_id_to_device, allocation_summary, ALL_DEVICES
 from dynpartition.partitioner.async_execution import test_model_with
 
 batch_size = 30  # 120
-
-
 MAX_NODES = 128
 
 
 class SchedulerEnv(gym.Env):
     num_batches = 1
-    num_repeat = 1  # increase for variance reduction when computing rewards
+    num_repeat = 10  # increase for variance reduction when computing rewards
 
     def __init__(self, is_train=True, render_mode=None):
         # Do not support render_mode for now
@@ -94,7 +92,7 @@ class SchedulerEnv(gym.Env):
         for idx, device_id in enumerate(action):
             device_allocations[idx] = device_id_to_device_string(device_id)
 
-        # print("Allocation:", device_allocations)
+        allocation_summary(device_allocations)
 
         self.current_batch += 1
 
