@@ -6,7 +6,7 @@ import torch
 import torch.utils.data as data
 from tqdm import tqdm
 
-import dynpartition.dataset.Constants as Constants
+import dynpartition.dataset.constants as Constants
 from dynpartition.dataset.tree import Tree
 from dynpartition.dataset.vocab import Vocab
 
