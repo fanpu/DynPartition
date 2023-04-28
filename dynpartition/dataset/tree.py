@@ -148,3 +148,9 @@ class Tree:
         if self.parent is None:
             return 0
         return self.parent.depth_from_root_parent() + 1
+
+    def get_all_nodes(self):
+        return self.pre_order()
+
+    def topological_sort(self):
+        return self.post_order()
