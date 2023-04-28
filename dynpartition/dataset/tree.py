@@ -5,6 +5,7 @@ import math
 from typing import List, Optional, Tuple, Union, Dict
 
 import torch
+from torch import Tensor
 
 
 @dataclasses.dataclass
@@ -20,8 +21,8 @@ class Tree:
 
     # runtime
     parent: Optional[Tree] = None
-    state: Union[None, Tuple[torch.Tensor, ...]] = None
-    output: Optional[int] = None
+    state: Union[None, Tuple[Tensor, ...]] = None
+    output: Union[None, int, float, Tensor] = None
     traversal_index: Optional[int] = None
     traversal_dict: Optional[Dict[int, Tree]] = None  # only defined for root
     device: Optional[torch.device] = None  # device of node execution
