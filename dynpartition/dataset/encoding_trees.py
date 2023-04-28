@@ -86,7 +86,6 @@ def encode_tree(
     if set_traversal_index:
         tree.traversal_dict = {}
         for i, node in enumerate(node_list):
-            node.traversal_index = i
             tree.traversal_dict[i] = node
 
     node_ids = [id(node) for node in node_list]

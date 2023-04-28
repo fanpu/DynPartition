@@ -23,7 +23,7 @@ class Tree:
     parent: Optional[Tree] = None
     state: Union[None, Tuple[Tensor, ...]] = None
     output: Union[None, int, float, Tensor] = None
-    traversal_index: Optional[int] = None
+
     traversal_dict: Optional[Dict[int, Tree]] = None  # only defined for root
     device_for_state: Optional[torch.device] = None  # device of node execution
     device_for_output: Optional[torch.device] = None  # device of node execution

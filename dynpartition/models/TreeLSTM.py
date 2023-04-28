@@ -98,9 +98,6 @@ class BinaryTreeLSTM(nn.Module):
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
     def forward(self, tree: Tree):
-        """
-        s: map from node traversal_index to device
-        """
         if tree.num_children == 0:
             # Leaf Module
             value = torch.tensor(
@@ -114,6 +111,7 @@ class BinaryTreeLSTM(nn.Module):
             for child in tree.children:
                 self.forward(child)
 
+            # Composer Module
             states = sum([child.state for child in tree.children], ())
             tree.state = self.composer.forward(*states)
 
