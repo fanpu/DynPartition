@@ -7,8 +7,10 @@
 
 import torch
 import torch.nn as nn
+from typing import Optional
 
 from dynpartition.dataset.tree import Tree
+from dynpartition.partitioner.partitioner_utils import move_tensor_unless_same_device
 
 
 class BinaryTreeLeafModule(nn.Module):
@@ -95,7 +97,7 @@ class BinaryTreeLSTM(nn.Module):
         self.composer = BinaryTreeComposer(cuda, in_dim, mem_dim)
         self.output_module = SentimentModule(cuda, mem_dim, num_classes)
 
-    def forward(self, tree: Tree, device_allocation=None):
+    def forward(self, tree: Tree, device_allocations: Optional[dict] = None):
         """
         Device allocations: map from node traversal_index to device
         """
@@ -103,19 +105,33 @@ class BinaryTreeLSTM(nn.Module):
             # Leaf Module
             value = torch.tensor(
                 tree.value,
-                device=device_allocation[tree.idx] if device_allocation else self.embedding_model.weight.device
+                device=device_allocations[tree.traversal_index] if device_allocations else self.embedding_model.weight.device
             )
+            print("gg")
+            import ipdb
+            ipdb.set_trace()
             x = torch.unsqueeze(self.embedding_model(value), 1).T
+            print("hehe")
+            print(x.get_device())
             tree.state = self.leaf_module.forward(x)
+            print(tree.state.get_device())
 
         else:
             for child in tree.children:
-                self.forward(child)
+                self.forward(child, device_allocations=device_allocations)
 
             # Non-leaf Module
-            states = sum([child.state for child in tree.children], ())
+            import ipdb
+            ipdb.set_trace()
+            # TODO: don't want to convert tensor with .to()
+            # if already on the same device
+            states = sum([child.state for child in tree.children],
+                         ())
+            states_moved = map(move_tensor_unless_same_device(
+                dest_device_id=device_allocations[tree.traversal_index]), states)
+            # .to(device_allocations[tree.idx])
             tree.state = self.composer.forward(
-                *states).to(device_allocation[tree.idx])
+                *states)
 
         # Output Module
         tree.output = self.output_module.forward(*tree.state)
@@ -161,5 +177,5 @@ class TreeLSTMSentiment(nn.Module):
     def embedding_model(self):
         return self.tree_module.embedding_model
 
-    def forward(self, tree):
-        return self.tree_module(tree)
+    def forward(self, tree, device_allocations: Optional[dict] = None):
+        return self.tree_module.forward(tree, device_allocations=device_allocations)

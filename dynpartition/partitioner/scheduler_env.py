@@ -37,7 +37,8 @@ class SchedulerEnv(gym.Env):
             self.dataset = train_dataset
             self.dataset_len = len(train_dataset)
             self.encoded_trees = create_tree_embedding_dataset(
-                train_dataset.trees, max_num_nodes=MAX_NODES, name="train_sst", plot=True)
+                train_dataset.trees, max_num_nodes=MAX_NODES, name="train_sst",
+                set_traversal_index=True, plot=True)
         else:
             self.dataset = test_dataset
             self.dataset_len = len(test_dataset)
@@ -91,17 +92,19 @@ class SchedulerEnv(gym.Env):
         device_allocations = {}
         # the tree indices range in [1, tree_size] inclusive
         for idx, device_id in enumerate(action):
-            device_allocations[idx + 1] = device_id_to_device_string(device_id)
+            device_allocations[idx] = device_id_to_device_string(device_id)
 
-        print("Chose allocation", device_allocations)
+        print("Allocation:", device_allocations)
 
-        import ipdb
-        ipdb.set_trace()
-
-        partition_layer = action
         self.current_batch += 1
 
         terminated = self.current_batch == self.num_batches
+
+        import ipdb
+        ipdb.set_trace()
+        tree = self.dataset.trees[self.obs_id]
+        output = self.model.forward(
+            tree, device_allocations=device_allocations)
 
         setup = f"""\
 inputs = torch.randn(batch_size, 3, image_w, image_h)
