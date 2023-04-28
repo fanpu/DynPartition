@@ -45,7 +45,7 @@ class SchedulerEnv(gym.Env):
             self.encoded_trees = create_tree_embedding_dataset(
                 test_dataset.trees, max_num_nodes=MAX_NODES, name="test_sst", plot=True)
 
-        self.obs_id = np.random.randint(low=0, high=self.dataset_len)
+        self._gen_new_sample()
         self.observation_shape = self.encoded_trees[0].numpy().shape
         self.observation_space = spaces.Box(
             low=-np.ones(self.observation_shape), high=np.ones(self.observation_shape))
@@ -62,6 +62,9 @@ class SchedulerEnv(gym.Env):
         self.window = None
         self.clock = None
 
+    def _gen_new_sample(self):
+        self.obs_id = np.random.randint(low=0, high=self.dataset_len)
+
     def _get_obs(self):
         return self.encoded_trees[self.obs_id].reshape(-1,)
 
@@ -77,7 +80,7 @@ class SchedulerEnv(gym.Env):
         self.allocations = {}  # Determined allocations
         self.current_batch = 0
         self.prev_action = None
-        self.obs_id = np.random.randint(low=0, high=self.dataset_len)
+        self._gen_new_sample()
 
         observation = self._get_obs()
 
@@ -100,27 +103,24 @@ class SchedulerEnv(gym.Env):
 
         terminated = self.current_batch == self.num_batches
 
-        import ipdb
-        ipdb.set_trace()
         tree = self.dataset.trees[self.obs_id]
         output = self.model.forward(
             tree, device_allocations=device_allocations)
 
-        setup = f"""\
-inputs = torch.randn(batch_size, 3, image_w, image_h)
-model = PipelineParallelResNet50(partition_layer={partition_layer})"""
-        stmt = f"""\
-outputs = model(inputs.to(DEVICE_0))"""
-        run_times = timeit.repeat(
-            stmt, setup, number=1, repeat=self.num_repeat, globals=globals())
-        mean, std = np.mean(run_times), np.std(run_times)
+        # TODO adapt below
+#         setup = f"""\
+# inputs = torch.randn(batch_size, 3, image_w, image_h)
+# model = PipelineParallelResNet50(partition_layer={partition_layer})"""
+#         stmt = f"""\
+# outputs = model(inputs.to(DEVICE_0))"""
+#         run_times = timeit.repeat(
+#             stmt, setup, number=1, repeat=self.num_repeat, globals=globals())
+#         mean, std = np.mean(run_times), np.std(run_times)
+        mean = 1337  # temp
 
         reward = -mean
-
+        self._gen_new_sample()
         observation = self._get_obs()
         info = self._get_info()
-
-        if self.render_mode == "human":
-            self._render_frame()
 
         return observation, reward, terminated, info
