@@ -1,21 +1,23 @@
+import asyncio
 import copy
 import math
 import sys
+from functools import partial
 from typing import Union, List, Dict
 
+import aiocells
 import numpy as np
 import torch
 from tqdm import tqdm
 
 from dynpartition.dataset.accuracy import sentiment_accuracy_score
-from dynpartition.dataset.load import load_math_model, load_tree_lstm
+from dynpartition.dataset.load import load_math_model
 from dynpartition.dataset.tree import Tree
 from dynpartition.models.MathFuncSolver import MathFuncSolver, \
     MathBinaryTreeLeafModule, MathCheckModule, MathBinaryTreeComposer
 from dynpartition.models.TreeLSTM import TreeLSTMSentiment, \
     BinaryTreeLeafModule, SentimentModule, BinaryTreeComposer
 from dynpartition.partitioner.partitioner_utils import tensors_to_device
-
 
 TREE_MODELS = Union[MathFuncSolver, TreeLSTMSentiment]
 
@@ -63,25 +65,27 @@ def execute_output(
 @torch.no_grad()
 def sync_tree_execution(
         tree: Tree,
-        model: Dict[torch.device, TREE_MODELS],
+        model_dict: Dict[torch.device, TREE_MODELS],
 ) -> torch.Tensor:
     nodes = tree.topological_sort()
     for node in nodes:
+        model = model_dict[node.device]
+
         if node.is_leaf():
             execute_leaf(
                 node=node,
-                leaf_module=model[node.device].leaf_module,
-                embedding_model=model[node.device].embedding_model
+                leaf_module=model.leaf_module,
+                embedding_model=model.embedding_model
             )
         else:
             execute_non_leaf(
                 node=node,
-                composer=model[node.device].composer,
+                composer=model.composer,
             )
 
         execute_output(
             node=node,
-            output_module=model[node.device].output_module,
+            output_module=model.output_module,
         )
 
     return tree.output
@@ -90,36 +94,42 @@ def sync_tree_execution(
 @torch.no_grad()
 def async_tree_execution(
         tree: Tree,
-        models_dict: Dict[torch.device, TREE_MODELS],
+        model_dict: Dict[torch.device, TREE_MODELS],
 ) -> torch.Tensor:
-    pass
-    # threads = []
-    # for node in tree.nodes:
-    #     if node.num_children == 0:
-    #         threads.append(threading.Thread(
-    #             target=execute_leaf,
-    #             args=(model, node)
-    #         ))
-    #     else:
-    #         threads.append(threading.Thread(
-    #             target=execute_non_leaf,
-    #             args=(model, node)
-    #         ))
-    # for thread in threads:
-    #     thread.start()
-    # for thread in threads:
-    #     thread.join()
-    #
-    # threads = []
-    # for node in tree.nodes:
-    #     threads.append(threading.Thread(
-    #         target=execute_output,
-    #         args=(model, node)
-    #     ))
-    # for thread in threads:
-    #     thread.start()
-    # for thread in threads:
-    #     thread.join()
+    graph = aiocells.DependencyGraph()
+    state_functions = {}
+    for node in tree.topological_sort():
+        model = model_dict[node.device]
+
+        if node.is_leaf():
+            calculate_state = partial(
+                execute_leaf,
+                node=node,
+                leaf_module=model.leaf_module,
+                embedding_model=model.embedding_model
+            )
+        else:
+            calculate_state = partial(
+                execute_non_leaf,
+                node=node,
+                composer=model.composer,
+            )
+
+        calculate_output = partial(
+            execute_output,
+            node=node,
+            output_module=model.output_module,
+        )
+
+        state_functions[id(node)] = calculate_state
+        graph.add_node(calculate_state)
+        graph.add_node(calculate_output)
+        graph.add_precedence(calculate_state, calculate_output)
+        for child in node.children:
+            graph.add_precedence(state_functions[id(child)], calculate_state)
+
+    asyncio.run(aiocells.async_compute_concurrent(graph))
+    return tree.output
 
 
 @torch.no_grad()
@@ -148,11 +158,16 @@ def test_model_with(
         new_model.eval()
         models_dict[devices[i]] = new_model.to(devices[i])
 
-    for idx in tqdm(range(len(dataset)), desc=f'Testing ', ascii=True):
+    for idx in tqdm(
+        range(len(dataset)),
+        desc=f'Testing {execution_strategy}',
+        ascii=True,
+        mininterval=0.5,
+    ):
         tree = dataset[idx]
 
         for i in tree.get_all_nodes():
-            i.device = devices[math.floor(np.random.rand() * len(devices))]
+            assert i.device in devices
 
         if execution_strategy == 'async':
             output = async_tree_execution(tree, models_dict)
@@ -175,7 +190,7 @@ def test_model_with(
     return acc
 
 
-if __name__ == '__main__':
+def main():
     # import lovely_tensors
     # lovely_tensors.monkey_patch()
     print("Testing...")
@@ -183,15 +198,18 @@ if __name__ == '__main__':
     device = torch.device(
         "cuda" if (False and torch.cuda.is_available()) else "cpu"
     )
+    devices = ["cpu", "cuda:0"]
+
+    for i in range(len(devices)):
+        devices[i] = torch.device(devices[i])
 
     model, dataset = load_math_model(device)
-    math_acc = test_model_with(
-        model,
-        dataset[:100],
-        ["cpu", "cuda"],
-        execution_strategy='async'
-    )
-    print(f"Math accuracy: {math_acc * 100:.4f}%")
+    for tree in dataset:
+        for i in tree.get_all_nodes():
+            i.device = devices[math.floor(np.random.rand() * len(devices))]
+
+    test_model_with(model, dataset[:1000], devices, 'sync')
+    test_model_with(model, dataset[:1000], devices, 'async')
 
     # model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
     # dev_acc = test_model_with(
@@ -201,3 +219,7 @@ if __name__ == '__main__':
     #     execution_strategy='sync'
     # )
     # print(f"TreeLSTM Dev accuracy: {dev_acc * 100:.4f}%")
+
+
+if __name__ == '__main__':
+    main()
