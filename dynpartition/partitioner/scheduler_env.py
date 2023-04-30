@@ -109,11 +109,24 @@ class SchedulerEnv(gym.Env):
             test_model_with(self.model, dataset=[
                             tree], devices=ALL_DEVICES, execution_strategy='async', with_tqdm=False)
 
-        run_times = timeit.repeat(
-            execute_forward, number=1, repeat=self.num_repeat, globals=globals())
-        mean, std = np.mean(run_times), np.std(run_times)
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
+        test_model_with(self.model, dataset=[
+            tree], devices=ALL_DEVICES, execution_strategy='async', with_tqdm=False)
+        end.record()
 
-        reward = -mean
+        # Waits for everything to finish running
+        torch.cuda.synchronize()
+
+        elapsed_time = start.elapsed_time(end)
+        reward = -elapsed_time
+
+        # run_times = timeit.repeat(
+        #     execute_forward, number=1, repeat=self.num_repeat, globals=globals())
+        # mean, std = np.mean(run_times), np.std(run_times)
+
+        # reward = -mean
         self._gen_new_sample()
         observation = self._get_obs()
         info = self._get_info()

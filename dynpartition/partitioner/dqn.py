@@ -104,7 +104,9 @@ class Replay_Memory():
 
 
 class DQN_Agent():
-    def __init__(self, env, render=False):
+    STRATEGIES = ['static', 'random', 'rl']
+
+    def __init__(self, env, strategy, render=False):
         # Create an instance of the network itself, as well as the memory.
         lr = 5e-4
         # self.env = FlattenObservation(env)
@@ -123,8 +125,16 @@ class DQN_Agent():
         self.gamma = 0.99
         self.test_episodes = 20
         self.c = 0
+        assert strategy in self.STRATEGIES
+        self.strategy = strategy
 
-    def epsilon_greedy_policy(self, q_values):
+    def static_strategy(self):
+        return np.zeros(self.nNodes, dtype=int)
+
+    def random_strategy(self):
+        return np.random.randint(low=0, high=2, size=self.nNodes, dtype=int)
+
+    def rl_epsilon_greedy_strategy(self, q_values):
         # Creating epsilon greedy probabilities to sample from.
         policy = np.zeros(self.nNodes)
         with torch.no_grad():
@@ -136,10 +146,26 @@ class DQN_Agent():
                     policy[node] = np.argmax(q_values.numpy()[node])
         return policy.astype(int)
 
-    def greedy_policy(self, q_values):
+    def rl_greedy_strategy(self, q_values):
         # Creating greedy policy for test time.
         with torch.no_grad():
             return np.argmax(q_values.numpy(), axis=1).astype(int)
+
+    def epsilon_greedy_policy(self, q_values):
+        if self.strategy == 'static':
+            return self.static_strategy()
+        elif self.strategy == 'random':
+            return self.random_strategy()
+        else:
+            return self.rl_epsilon_greedy_strategy(q_values)
+
+    def greedy_policy(self, q_values):
+        if self.strategy == 'static':
+            return self.static_strategy()
+        elif self.strategy == 'random':
+            return self.random_strategy()
+        else:
+            return self.rl_greedy_strategy(q_values)
 
     def compute_loss(self, minibatch):
         loss = 0
@@ -181,9 +207,10 @@ class DQN_Agent():
 
             # Update weights only every 50 steps to reduce stability issue of moving targets
             self.c += 1
-            if self.c % 50 == 0:
+            if self.c % 20 == 0:
                 self.q_network.target.load_state_dict(
                     self.q_network.model.state_dict())
+                print("updating network")
 
             state = new_state
 
