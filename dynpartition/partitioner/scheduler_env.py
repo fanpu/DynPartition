@@ -11,8 +11,8 @@ from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
 from dynpartition.partitioner.partitioner_utils import \
     device_id_to_device_string, device_id_to_device, allocation_summary, ALL_DEVICES
-from dynpartition.partitioner.async_execution import test_model_with, \
-    for_time_measurement
+from dynpartition.partitioner.async_execution import test_model_with
+from dynpartition.partitioner.time_measurements import for_time_measurement
 
 batch_size = 30  # 120
 MAX_NODES = 128
