@@ -25,7 +25,8 @@ def execute_leaf(
         embedding_model: torch.nn.Embedding = None
 ):
     if isinstance(leaf_module, MathBinaryTreeLeafModule):
-        value = tensors_to_device(node.device_for_state, torch.tensor(node.value))
+        value = tensors_to_device(node.device_for_state,
+                                  torch.tensor(node.value))
         node.state = leaf_module.forward(value)
     elif isinstance(leaf_module, BinaryTreeLeafModule):
         value = torch.tensor(node.value)

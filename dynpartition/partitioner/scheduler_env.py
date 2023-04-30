@@ -1,17 +1,16 @@
 import timeit
 
 import gym
-import ipdb
 import numpy as np
 import torch
 from gym import spaces
-from resnet import PipelineParallelResNet50
 
 from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
 from dynpartition.partitioner.partitioner_utils import \
-    device_id_to_device_string, device_id_to_device, allocation_summary, ALL_DEVICES
-from dynpartition.partitioner.async_execution import test_model_with
+    device_id_to_device_string, device_id_to_device, allocation_summary, \
+    ALL_DEVICES
+from dynpartition.partitioner.time_measurements import for_time_measurement
 
 batch_size = 30  # 120
 MAX_NODES = 128
@@ -23,35 +22,40 @@ class SchedulerEnv(gym.Env):
 
     def __init__(self, is_train=True, render_mode=None):
         # Do not support render_mode for now
-
-        device = torch.device("cuda" if (
-            True and torch.cuda.is_available()) else "cpu")
-        self.model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(
-            device)
+        self.model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
 
         if is_train:
             self.dataset = train_dataset
             self.dataset_len = len(train_dataset)
             self.encoded_trees = create_tree_embedding_dataset(
-                train_dataset.trees, max_num_nodes=MAX_NODES, name="train_sst",
-                set_traversal_index=True)
+                train_dataset.trees,
+                max_num_nodes=MAX_NODES,
+                name="train_sst",
+                set_traversal_index=True
+            )
         else:
             self.dataset = test_dataset
             self.dataset_len = len(test_dataset)
             self.encoded_trees = create_tree_embedding_dataset(
-                test_dataset.trees, max_num_nodes=MAX_NODES, name="test_sst")
+                test_dataset.trees,
+                max_num_nodes=MAX_NODES,
+                name="test_sst"
+            )
 
         self._gen_new_sample()
         self.observation_shape = self.encoded_trees[0].numpy().shape
         self.observation_space = spaces.Box(
-            low=-np.ones(self.observation_shape), high=np.ones(self.observation_shape))
+            low=-np.ones(self.observation_shape),
+            high=np.ones(self.observation_shape)
+        )
 
         self.max_nodes = self.observation_shape[0]
         self.num_devices = torch.cuda.device_count() + 1
 
         # Action space: Which GPU to assign the node to
         self.action_space = spaces.MultiDiscrete(
-            [self.num_devices] * self.max_nodes)
+            [self.num_devices] * self.max_nodes
+        )
 
         assert render_mode is None
         self.render_mode = render_mode
@@ -62,7 +66,7 @@ class SchedulerEnv(gym.Env):
         self.obs_id = np.random.randint(low=0, high=self.dataset_len)
 
     def _get_obs(self):
-        return self.encoded_trees[self.obs_id].reshape(-1,).numpy()
+        return self.encoded_trees[self.obs_id].reshape(-1, ).numpy()
 
     def _get_info(self):
         return None
@@ -100,14 +104,16 @@ class SchedulerEnv(gym.Env):
 
         tree = self.dataset.trees[self.obs_id]
         for traversal_idx in range(tree.size()):
-            tree.traversal_dict[traversal_idx].device_for_state = device_id_to_device(
-                action[traversal_idx])
-            tree.traversal_dict[traversal_idx].device_for_output = device_id_to_device(
-                action[traversal_idx])
+            node = tree.traversal_dict[traversal_idx]
+            node.device_for_state = device_id_to_device(action[traversal_idx])
+            node.device_for_output = device_id_to_device(action[traversal_idx])
 
-        def execute_forward():
-            test_model_with(self.model, dataset=[
-                            tree], devices=ALL_DEVICES, execution_strategy='async', with_tqdm=False)
+        execute_forward = for_time_measurement(
+            model=self.model,
+            tree=tree,
+            devices=ALL_DEVICES,
+            execution_strategy='async',
+        )
 
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
@@ -115,6 +121,14 @@ class SchedulerEnv(gym.Env):
         test_model_with(self.model, dataset=[
             tree], devices=ALL_DEVICES, execution_strategy='async', with_tqdm=False)
         end.record()
+        # run_times = timeit.repeat(
+        #     execute_forward,
+        #     number=1,
+        #     repeat=self.num_repeat,
+        #     globals=globals()
+        # )
+        # mean, std = np.mean(run_times), np.std(run_times)
+        # print(f"Mean: {mean}, Std: {std}")
 
         # Waits for everything to finish running
         torch.cuda.synchronize()

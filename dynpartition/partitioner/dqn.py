@@ -1,17 +1,12 @@
 #!/usr/bin/env python
-# TODO fanpu
 
-import argparse
 import collections
-import os
-import sys
-import gym
-import matplotlib.pyplot as plt
+
 import numpy as np
 import torch
-import tqdm
 from torch import tensor
-from gym.wrappers import FlattenObservation
+
+from dynpartition.get_dir import get_log_path
 
 
 class FullyConnectedModel(torch.nn.Module):
@@ -44,13 +39,12 @@ class FullyConnectedModel(torch.nn.Module):
         return x.reshape(self.output_shape)
 
 
-class QNetwork():
-
+class QNetwork:
     # This class essentially defines the network architecture.
     # The network should take in state of the world as an input,
     # and output Q values of the actions available to the agent as the output.
 
-    def __init__(self, env, lr, logdir=None):
+    def __init__(self, env, lr):
         nA = env.action_space[0].n
         nNodes = len(env.action_space)
         nS = env.observation_space.shape[0] * env.observation_space.shape[1]
@@ -63,8 +57,8 @@ class QNetwork():
 
     def save_model_weights(self, suffix):
         # Helper function to save your model / weights.
-        path = os.path.join(self.logdir, "model")
-        torch.save(self.model.state_dict(), model_file)
+        path = get_log_path().joinpath("model")
+        torch.save(self.model.state_dict(), path.joinpath(f"model_{suffix}"))
         return path
 
     def load_model(self, model_file):
@@ -76,8 +70,7 @@ class QNetwork():
         pass
 
 
-class Replay_Memory():
-
+class ReplayMemory:
     def __init__(self, memory_size=50000, burn_in=10000):
         # The memory essentially stores transitions recorder from the agent
         # taking actions in the environment.
@@ -115,10 +108,10 @@ class DQN_Agent():
         self.nA = self.env.action_space[0].n
         self.nA_shape = (self.nNodes, self.nA)
         self.nS = self.env.observation_space.shape[0] * \
-            self.env.observation_space.shape[1]
+                  self.env.observation_space.shape[1]
         self.epsilon = 0.05
         self.q_network = QNetwork(self.env, lr)
-        self.replay = Replay_Memory()
+        self.replay = ReplayMemory()
         # self.burn_in_memory()
         self.E = 200
         self.N = 32
@@ -175,7 +168,7 @@ class DQN_Agent():
         for (state, action, reward, new_state, sample_done) in minibatch:
             y.append(reward)
             q_predict.append(self.q_network.model(tensor(state))[
-                             torch.arange(len(action)), action].sum())
+                                 torch.arange(len(action)), action].sum())
 
         for (yi, qi) in zip(y, q_predict):
             loss += torch.square(yi - qi)
@@ -192,10 +185,10 @@ class DQN_Agent():
         state = self.env.reset()
         done = False
 
-        # TODO: change this to monte carlo updates with no discount on rewards
         while not done:
             action = self.epsilon_greedy_policy(
-                self.q_network.model(tensor(state)))
+                self.q_network.model(tensor(state))
+            )
             new_state, reward, done, info = self.env.step(action)
             self.replay.append((state, action, reward, new_state, done))
             minibatch = self.replay.sample_batch(self.N)

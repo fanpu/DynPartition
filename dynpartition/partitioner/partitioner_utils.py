@@ -1,11 +1,26 @@
-from typing import Union, Tuple, Sequence
+import argparse
+import warnings
+from typing import Union, Tuple, Sequence, List
 
 import torch
 
+# Add arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('--with-cpu', action='store_true',
+                    help='Whether to test without CPU')
+args = parser.parse_args()
 
 _devices = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
-_devices.append('cpu')
-ALL_DEVICES = _devices
+if torch.cuda.device_count() == 0:
+    warnings.warn("No CUDA device is detected. "
+                  "The program will run on CPU only.")
+
+if args.with_cpu or torch.cuda.device_count() == 0:
+    ALL_DEVICES: List[str] = ['cpu'] + _devices
+else:
+    ALL_DEVICES: List[str] = _devices
+
+print(f"Devices: {ALL_DEVICES}")
 
 
 def device_id_to_device_string(device_id):

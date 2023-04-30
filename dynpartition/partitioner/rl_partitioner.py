@@ -1,21 +1,15 @@
 # TODO: Fanpu
 
-import os
-import sys
 import timeit
 
-import ipdb
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 import tqdm
-from dqn import DQN_Agent
-from scheduler_env import SchedulerEnv
-from torchvision.models.resnet import Bottleneck, ResNet
 
+from dqn import DQN_Agent
 from dynpartition.get_dir import get_plot_path
-from dynpartition.dataset.load import load_tree_lstm
+from scheduler_env import SchedulerEnv
 
 num_batches = 3
 batch_size = 5  # 120
@@ -98,7 +92,7 @@ def pipeline_parallelism():
 
 def main():
     num_seeds = 1
-    num_episodes = 3000
+    num_episodes = 100
     num_test_episodes = 5
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
@@ -109,18 +103,23 @@ def main():
     for i in tqdm.tqdm(range(num_seeds)):
         for m in range(num_episodes):
             agent.train()
-            if m % episodes_between_test == 0:
-                print("Episode: {}".format(m))
-                G = np.zeros(20)
-                for k in range(num_test_episodes):
-                    g = agent.test()
-                    G[k] = g
 
-                reward_mean = G.mean()
-                reward_sd = G.std()
-                print("The test reward for episode {0} is {1} with sd of {2}.".format(
-                    m, reward_mean, reward_sd))
-                reward_means.append(reward_mean)
+            if episodes_between_test != 0:
+                continue
+
+            print(f"Episode: {m}")
+            G = np.zeros(20)
+            for k in range(num_test_episodes):
+                g = agent.test()
+                G[k] = g
+
+            reward_mean = G.mean()
+            reward_sd = G.std()
+            print(
+                f"The test reward for episode {m} is {reward_mean} "
+                f"with sd of {reward_sd}."
+            )
+            reward_means.append(reward_mean)
 
         print(reward_means)
         res[i] = np.array(reward_means)
@@ -144,7 +143,4 @@ def main():
 
 
 if __name__ == '__main__':
-    device = torch.device("cuda" if (
-        False and torch.cuda.is_available()) else "cpu")
-
     main()

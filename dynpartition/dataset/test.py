@@ -86,14 +86,14 @@ if __name__ == '__main__':
         "cuda" if (False and torch.cuda.is_available()) else "cpu"
     )
 
-    model, dataset = load_math_model(device)
+    model, dataset = load_math_model()
     model.to(device)
     math_acc = test_math_model(model, dataset)
     print(f"Math accuracy: {math_acc * 100:.4f}%")
 
     print()
     print()
-    model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+    model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
     model.to(device)
     dev_acc = test_tree_lstm(model, dev_dataset)
     print(f"TreeLSTM Dev accuracy: {dev_acc * 100:.4f}%")
