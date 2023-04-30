@@ -1,3 +1,4 @@
+import argparse
 import copy
 from typing import List, Optional, Union
 
@@ -86,10 +87,9 @@ def run_random_distribution(
 
 
 def _main():
-    print("Testing...")
-    print()
     devices = ALL_DEVICES
 
+    print("Testing...")
     math_model, dataset = load_math_model()
     tree_lstm, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
     tree_dataset = dev_dataset.trees
