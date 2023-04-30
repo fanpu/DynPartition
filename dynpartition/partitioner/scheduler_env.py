@@ -11,7 +11,8 @@ from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
 from dynpartition.partitioner.partitioner_utils import \
     device_id_to_device_string, device_id_to_device, allocation_summary, ALL_DEVICES
-from dynpartition.partitioner.async_execution import test_model_with
+from dynpartition.partitioner.async_execution import test_model_with, \
+    for_time_measurement
 
 batch_size = 30  # 120
 MAX_NODES = 128
@@ -109,14 +110,12 @@ class SchedulerEnv(gym.Env):
             node.device_for_state = device_id_to_device(action[traversal_idx])
             node.device_for_output = device_id_to_device(action[traversal_idx])
 
-        def execute_forward():
-            test_model_with(
-                self.model,
-                dataset=[tree],
-                devices=ALL_DEVICES,
-                execution_strategy='sync',
-                with_tqdm=False
-            )
+        execute_forward = for_time_measurement(
+            model=self.model,
+            tree=tree,
+            devices=ALL_DEVICES,
+            execution_strategy='async',
+        )
 
         run_times = timeit.repeat(
             execute_forward,
@@ -125,6 +124,7 @@ class SchedulerEnv(gym.Env):
             globals=globals()
         )
         mean, std = np.mean(run_times), np.std(run_times)
+        print(f"Mean: {mean}, Std: {std}")
 
         reward = -mean
         self._gen_new_sample()

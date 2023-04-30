@@ -25,7 +25,8 @@ def execute_leaf(
         embedding_model: torch.nn.Embedding = None
 ):
     if isinstance(leaf_module, MathBinaryTreeLeafModule):
-        value = tensors_to_device(node.device_for_state, torch.tensor(node.value))
+        value = tensors_to_device(node.device_for_state,
+                                  torch.tensor(node.value))
         node.state = leaf_module.forward(value)
     elif isinstance(leaf_module, BinaryTreeLeafModule):
         value = torch.tensor(node.value)
@@ -198,3 +199,45 @@ def test_model_with(
     sys.stdout.flush()
     sys.stderr.flush()
     return acc
+
+
+@torch.no_grad()
+def for_time_measurement(
+        model: [MathFuncSolver, TreeLSTMSentiment],
+        tree: Tree,
+        devices: List[Union[str, torch.device]],
+        execution_strategy: str = 'async',
+):
+    if not isinstance(model, (MathFuncSolver, TreeLSTMSentiment)):
+        raise TypeError(f'Unknown model type: {type(model)}')
+
+    if execution_strategy not in ['async', 'sync']:
+        raise ValueError(f'Unknown execution strategy: {execution_strategy}')
+
+    model.eval()
+    for i in range(len(devices)):
+        devices[i] = torch.device(devices[i])
+
+    # replicate model
+    models_dict: Dict[torch.device, TREE_MODELS] = {}
+    for i in range(len(devices)):
+        new_model = copy.deepcopy(model)
+        new_model.eval()
+        models_dict[devices[i]] = new_model.to(devices[i])
+
+    for i in tree.get_all_nodes():
+        if isinstance(i.device_for_state, str):
+            i.device_for_state = torch.device(i.device_for_state)
+        if isinstance(i.device_for_output, str):
+            i.device_for_output = torch.device(i.device_for_output)
+
+        assert i.device_for_state in devices
+        assert i.device_for_output in devices
+
+    def to_measure():
+        if execution_strategy == 'async':
+            _ = async_tree_execution(tree, models_dict)
+        else:  # sync
+            _ = sync_tree_execution(tree, models_dict)
+
+    return to_measure
