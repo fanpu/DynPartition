@@ -6,8 +6,9 @@ import torch
 
 from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.dataset.tree import Tree
-from dynpartition.partitioner.async_execution import test_model_with
+from dynpartition.get_dir import save_log_json
 from dynpartition.partitioner.partitioner_utils import ALL_DEVICES
+from dynpartition.partitioner.time_measurements import timeit_dataset
 
 
 def run_random_distribution(
@@ -87,6 +88,8 @@ def run_random_distribution(
 
 def _main():
     devices = ALL_DEVICES
+    n_devices = len(devices)
+    device_name = f"{int('cpu' in devices)}_{n_devices}"
 
     print("Testing...")
     math_model, dataset = load_math_model()
@@ -96,38 +99,70 @@ def _main():
     if len(devices) >= 3:
         print("MathFunc on Random Distribution with 1 module per device")
         trees = run_random_distribution(dataset, devices, [1] * len(devices))
-        test_model_with(math_model, trees[:1000], devices, 'sync')
-        test_model_with(math_model, trees[:1000], devices, 'async')
+        sync_times = timeit_dataset(
+            math_model, trees[:1000], devices, 'sync'
+        )
+        async_times = timeit_dataset(
+            math_model, trees[:1000], devices, 'async'
+        )
+        print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
+        print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
+        save_log_json(sync_times, name=f"mathfunc_random_1_sync_{device_name}")
+        save_log_json(async_times,
+                      name=f"mathfunc_random_1_async_{device_name}")
 
         print("TreeLSTM on Random Distribution with 1 module per device")
         trees = run_random_distribution(
             tree_dataset, devices, [1] * len(devices)
         )
-        test_model_with(tree_lstm, trees[:500], devices, 'sync')
-        test_model_with(tree_lstm, trees[:500], devices, 'async')
+        sync_times = timeit_dataset(tree_lstm, trees[:500], devices, 'sync')
+        async_times = timeit_dataset(tree_lstm, trees[:500], devices, 'async')
+        print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
+        print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
+        save_log_json(sync_times, name=f"treelstm_random_1_sync_{device_name}")
+        save_log_json(async_times,
+                      name=f"treelstm_random_1_async_{device_name}")
 
     if len(devices) >= 2:
         print("MathFunc on Random Distribution with 2 module per device")
         trees = run_random_distribution(dataset, devices, [2] * len(devices))
-        test_model_with(math_model, trees[:1000], devices, 'sync')
-        test_model_with(math_model, trees[:1000], devices, 'async')
+        sync_times = timeit_dataset(math_model, trees[:1000], devices, 'sync')
+        async_times = timeit_dataset(math_model, trees[:1000], devices, 'async')
+        print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
+        print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
+        save_log_json(sync_times, name=f"mathfunc_random_2_sync_{device_name}")
+        save_log_json(async_times,
+                      name=f"mathfunc_random_2_async_{device_name}")
 
         print("TreeLSTM on Random Distribution with 2 module per device")
         trees = run_random_distribution(
             tree_dataset, devices, [2] * len(devices)
         )
-        test_model_with(tree_lstm, trees[:500], devices, 'sync')
-        test_model_with(tree_lstm, trees[:500], devices, 'async')
+        sync_times = timeit_dataset(tree_lstm, trees[:500], devices, 'sync')
+        async_times = timeit_dataset(tree_lstm, trees[:500], devices, 'async')
+        print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
+        print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
+        save_log_json(sync_times, name=f"treelstm_random_2_sync_{device_name}")
+        save_log_json(async_times,
+                      name=f"treelstm_random_2_async_{device_name}")
 
     print("MathFunc on Random Distribution with 3 module per device")
     trees = run_random_distribution(dataset, devices, [3] * len(devices))
-    test_model_with(math_model, trees[:1000], devices, 'sync')
-    test_model_with(math_model, trees[:1000], devices, 'async')
+    sync_times = timeit_dataset(math_model, trees[:1000], devices, 'sync')
+    async_times = timeit_dataset(math_model, trees[:1000], devices, 'async')
+    print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
+    print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
+    save_log_json(sync_times, name=f"mathfunc_random_3_sync_{device_name}")
+    save_log_json(async_times, name=f"mathfunc_random_3_async_{device_name}")
 
     print("TreeLSTM on Random Distribution with 3 module per device")
     trees = run_random_distribution(tree_dataset, devices, [3] * len(devices))
-    test_model_with(tree_lstm, trees[:500], devices, 'sync')
-    test_model_with(tree_lstm, trees[:500], devices, 'async')
+    sync_times = timeit_dataset(tree_lstm, trees[:500], devices, 'sync')
+    async_times = timeit_dataset(tree_lstm, trees[:500], devices, 'async')
+    print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
+    print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
+    save_log_json(sync_times, name=f"treelstm_random_3_sync_{device_name}")
+    save_log_json(async_times, name=f"treelstm_random_3_async_{device_name}")
 
 
 if __name__ == '__main__':
