@@ -1,21 +1,15 @@
 # TODO: Fanpu
 
-import os
-import sys
 import timeit
 
-import ipdb
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 import tqdm
-from dqn import DQN_Agent
-from scheduler_env import SchedulerEnv
-from torchvision.models.resnet import Bottleneck, ResNet
 
+from dqn import DQN_Agent
 from dynpartition.get_dir import get_plot_path
-from dynpartition.dataset.load import load_tree_lstm
+from scheduler_env import SchedulerEnv
 
 num_batches = 3
 batch_size = 5  # 120

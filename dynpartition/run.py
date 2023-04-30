@@ -1,5 +1,3 @@
-import torch
-
 from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.partitioner.async_execution import test_model_with
 from dynpartition.partitioner.run_random_distribution import \

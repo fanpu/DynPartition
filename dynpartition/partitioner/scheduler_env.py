@@ -1,17 +1,15 @@
 import timeit
 
 import gym
-import ipdb
 import numpy as np
 import torch
 from gym import spaces
-from resnet import PipelineParallelResNet50
 
 from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
 from dynpartition.partitioner.partitioner_utils import \
-    device_id_to_device_string, device_id_to_device, allocation_summary, ALL_DEVICES
-from dynpartition.partitioner.async_execution import test_model_with
+    device_id_to_device_string, device_id_to_device, allocation_summary, \
+    ALL_DEVICES
 from dynpartition.partitioner.time_measurements import for_time_measurement
 
 batch_size = 30  # 120
@@ -68,7 +66,7 @@ class SchedulerEnv(gym.Env):
         self.obs_id = np.random.randint(low=0, high=self.dataset_len)
 
     def _get_obs(self):
-        return self.encoded_trees[self.obs_id].reshape(-1,).numpy()
+        return self.encoded_trees[self.obs_id].reshape(-1, ).numpy()
 
     def _get_info(self):
         return None

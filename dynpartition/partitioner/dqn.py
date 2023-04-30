@@ -1,17 +1,10 @@
 #!/usr/bin/env python
-# TODO fanpu
 
-import argparse
 import collections
-import os
-import sys
-import gym
-import matplotlib.pyplot as plt
+
 import numpy as np
 import torch
-import tqdm
 from torch import tensor
-from gym.wrappers import FlattenObservation
 
 from dynpartition.get_dir import get_log_path
 
@@ -113,7 +106,7 @@ class DQN_Agent():
         self.nA = self.env.action_space[0].n
         self.nA_shape = (self.nNodes, self.nA)
         self.nS = self.env.observation_space.shape[0] * \
-            self.env.observation_space.shape[1]
+                  self.env.observation_space.shape[1]
         self.epsilon = 0.05
         self.q_network = QNetwork(self.env, lr)
         self.replay = ReplayMemory()
@@ -149,7 +142,7 @@ class DQN_Agent():
         for (state, action, reward, new_state, sample_done) in minibatch:
             y.append(reward)
             q_predict.append(self.q_network.model(tensor(state))[
-                             torch.arange(len(action)), action].sum())
+                                 torch.arange(len(action)), action].sum())
 
         for (yi, qi) in zip(y, q_predict):
             loss += torch.square(yi - qi)

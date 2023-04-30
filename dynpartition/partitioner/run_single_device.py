@@ -3,9 +3,8 @@ from typing import List, Union
 
 import numpy as np
 import torch
-from dynpartition.dataset.load import load_tree_lstm, load_math_model
-from dynpartition.partitioner.async_execution import test_model_with
 
+from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.dataset.tree import Tree
 from dynpartition.partitioner.partitioner_utils import ALL_DEVICES
 from dynpartition.partitioner.time_measurements import timeit_dataset

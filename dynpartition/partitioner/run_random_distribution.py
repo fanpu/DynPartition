@@ -1,4 +1,3 @@
-import argparse
 import copy
 from typing import List, Optional, Union
 
@@ -96,23 +95,27 @@ def _main():
 
     if len(devices) >= 3:
         print("MathFunc on Random Distribution with 1 module per device")
-        trees = run_random_distribution(dataset, devices, [1]*len(devices))
+        trees = run_random_distribution(dataset, devices, [1] * len(devices))
         test_model_with(math_model, trees[:1000], devices, 'sync')
         test_model_with(math_model, trees[:1000], devices, 'async')
 
         print("TreeLSTM on Random Distribution with 1 module per device")
-        trees = run_random_distribution(tree_dataset, devices, [1]*len(devices))
+        trees = run_random_distribution(
+            tree_dataset, devices, [1] * len(devices)
+        )
         test_model_with(tree_lstm, trees[:500], devices, 'sync')
         test_model_with(tree_lstm, trees[:500], devices, 'async')
 
     if len(devices) >= 2:
         print("MathFunc on Random Distribution with 2 module per device")
-        trees = run_random_distribution(dataset, devices, [2]*len(devices))
+        trees = run_random_distribution(dataset, devices, [2] * len(devices))
         test_model_with(math_model, trees[:1000], devices, 'sync')
         test_model_with(math_model, trees[:1000], devices, 'async')
 
         print("TreeLSTM on Random Distribution with 2 module per device")
-        trees = run_random_distribution(tree_dataset, devices, [2]*len(devices))
+        trees = run_random_distribution(
+            tree_dataset, devices, [2] * len(devices)
+        )
         test_model_with(tree_lstm, trees[:500], devices, 'sync')
         test_model_with(tree_lstm, trees[:500], devices, 'async')
 

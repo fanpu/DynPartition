@@ -7,10 +7,8 @@
 
 import torch
 import torch.nn as nn
-from typing import Optional
 
 from dynpartition.dataset.tree import Tree
-from dynpartition.partitioner.partitioner_utils import tensors_to_device
 
 
 class BinaryTreeLeafModule(nn.Module):
