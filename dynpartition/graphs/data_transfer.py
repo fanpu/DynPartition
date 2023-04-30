@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +8,13 @@ from dynpartition.get_dir import get_path, get_plot_path
 
 
 def plot_data_transfer_speeds(data_dict):
+    default_plot_params = {
+        "align": 'center',
+        "alpha": 0.5,
+        "ecolor": 'red',
+        "capsize": 10,
+        "width": 0.6,
+    }
     for i in data_dict:
         files = []
         for file in Path(data_dict[i]).iterdir():
@@ -77,17 +83,9 @@ def plot_data_transfer_speeds(data_dict):
             mean = data_dict[i][j]["mean"]
             std = data_dict[i][j]["std"]
             diff = data_dict[i][j]["max"] - data_dict[i][j]["min"]
-            std = min(std, diff / 2, mean - data_dict[i][j]["min"])
-            plt.bar(
-                x_label,
-                mean,
-                yerr=std,
-                align='center',
-                alpha=0.5,
-                ecolor='red',
-                capsize=10,
-                width=0.6
-            )
+            err = min(std, diff / 2, mean - data_dict[i][j]["min"])
+            plt.bar(x_label, mean, yerr=err, **default_plot_params)
+
     plt.ylabel("Transfer Time (µs) for (1000, 1000) Matrix")
     plt.savefig(
         get_plot_path().joinpath("data_transfer.png"),
