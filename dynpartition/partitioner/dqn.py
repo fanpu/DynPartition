@@ -97,7 +97,7 @@ class ReplayMemory:
 
 
 class DQN_Agent():
-    STRATEGIES = ['static', 'random', 'rl']
+    STRATEGIES = ['static', 'static-cpu', 'random', 'rl']
 
     def __init__(self, env, strategy, render=False):
         # Create an instance of the network itself, as well as the memory.
@@ -108,7 +108,7 @@ class DQN_Agent():
         self.nA = self.env.action_space[0].n
         self.nA_shape = (self.nNodes, self.nA)
         self.nS = self.env.observation_space.shape[0] * \
-                  self.env.observation_space.shape[1]
+            self.env.observation_space.shape[1]
         self.epsilon = 0.05
         self.q_network = QNetwork(self.env, lr)
         self.replay = ReplayMemory()
@@ -123,6 +123,9 @@ class DQN_Agent():
 
     def static_strategy(self):
         return np.zeros(self.nNodes, dtype=int)
+
+    def static_cpu_strategy(self):
+        return np.ones(self.nNodes, dtype=int)
 
     def random_strategy(self):
         return np.random.randint(low=0, high=2, size=self.nNodes, dtype=int)
@@ -147,6 +150,8 @@ class DQN_Agent():
     def epsilon_greedy_policy(self, q_values):
         if self.strategy == 'static':
             return self.static_strategy()
+        elif self.strategy == 'static-cpu':
+            return self.static_cpu_strategy()
         elif self.strategy == 'random':
             return self.random_strategy()
         else:
@@ -155,6 +160,8 @@ class DQN_Agent():
     def greedy_policy(self, q_values):
         if self.strategy == 'static':
             return self.static_strategy()
+        elif self.strategy == 'static-cpu':
+            return self.static_cpu_strategy()
         elif self.strategy == 'random':
             return self.random_strategy()
         else:
@@ -168,7 +175,7 @@ class DQN_Agent():
         for (state, action, reward, new_state, sample_done) in minibatch:
             y.append(reward)
             q_predict.append(self.q_network.model(tensor(state))[
-                                 torch.arange(len(action)), action].sum())
+                torch.arange(len(action)), action].sum())
 
         for (yi, qi) in zip(y, q_predict):
             loss += torch.square(yi - qi)

@@ -97,15 +97,16 @@ def main():
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
     res = np.zeros((num_seeds, l))
-    agent = DQN_Agent(SchedulerEnv(), strategy='rl')
+    agent = DQN_Agent(SchedulerEnv(), strategy='static')
 
     reward_means = []
     for i in tqdm.tqdm(range(num_seeds)):
         for m in range(num_episodes):
+            print("Episode", m)
             agent.train()
 
-            if episodes_between_test != 0:
-                continue
+            # if episodes_between_test != 0:
+            #     continue
 
             print(f"Episode: {m}")
             G = np.zeros(20)
