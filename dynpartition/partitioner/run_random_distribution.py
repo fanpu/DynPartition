@@ -1,28 +1,15 @@
 import copy
-import math
 from typing import List, Optional, Union
 
 import numpy as np
 import torch
 
+from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.dataset.tree import Tree
+from dynpartition.partitioner.async_execution import test_model_with
 
 
-def single_device_run(
-        trees: List[Tree],
-        device: Union[str, torch.device],
-) -> List[Tree]:
-    device = torch.device(device)
-    trees = copy.deepcopy(trees)
-    for tree in trees:
-        for i in tree.get_all_nodes():
-            i.device_for_state = device
-            i.device_for_output = device
-
-    return trees
-
-
-def random_distribution(
+def run_random_distribution(
         trees: List[Tree],
         devices: List[Union[str, torch.device]],
         max_layer_per_device: Optional[List[int]] = None
@@ -96,3 +83,30 @@ def random_distribution(
 
     return trees
 
+
+def _main():
+    # import lovely_tensors
+    # lovely_tensors.monkey_patch()
+    print("Testing...")
+    print()
+    device = torch.device(
+        "cuda" if (False and torch.cuda.is_available()) else "cpu"
+    )
+    devices = ["cpu", "cuda:0"]
+
+    math_model, dataset = load_math_model(device)
+    tree_lstm, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+
+    print("MathFunc on Single Device")
+    trees = run_random_distribution(dataset, devices)
+    test_model_with(math_model, trees[:1000], devices, 'sync')
+    test_model_with(math_model, trees[:1000], devices, 'async')
+
+    print("TreeLSTM on Single Device")
+    trees = run_random_distribution(dev_dataset.trees, devices)
+    test_model_with(tree_lstm, trees[:500], devices, 'sync')
+    test_model_with(tree_lstm, trees[:500], devices, 'async')
+
+
+if __name__ == '__main__':
+    _main()

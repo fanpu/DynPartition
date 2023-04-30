@@ -2,8 +2,9 @@ import torch
 
 from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.partitioner.async_execution import test_model_with
-from dynpartition.partitioner.partitioner import random_distribution, \
-    single_device_run
+from dynpartition.partitioner.run_random_distribution import \
+    run_random_distribution
+from dynpartition.partitioner.run_single_device import run_single_device
 
 
 def main():
@@ -19,24 +20,24 @@ def main():
     model, dataset = load_math_model(device)
 
     print("MathFunc on Single Device")
-    trees = single_device_run(dataset, device)
+    trees = run_single_device(dataset, device)
     test_model_with(model, trees[:1000], devices, 'sync')
     test_model_with(model, trees[:1000], devices, 'async')
 
     print("MathFunc on Multiple with Random Distribution")
-    trees = random_distribution(dataset, devices)
+    trees = run_random_distribution(dataset, devices)
     test_model_with(model, trees[:1000], devices, 'sync')
     test_model_with(model, trees[:1000], devices, 'async')
 
     model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
 
     print("TreeLSTM on Single Device")
-    trees = single_device_run(dev_dataset.trees, device)
+    trees = run_single_device(dev_dataset.trees, device)
     test_model_with(model, trees[:500], devices, 'sync')
     test_model_with(model, trees[:500], devices, 'async')
 
     print("TreeLSTM on Multiple with Random Distribution")
-    trees = random_distribution(dev_dataset.trees, devices)
+    trees = run_random_distribution(dev_dataset.trees, devices)
     test_model_with(model, trees[:500], devices, 'sync')
     test_model_with(model, trees[:500], devices, 'async')
 
