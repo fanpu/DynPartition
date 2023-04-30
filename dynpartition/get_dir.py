@@ -26,6 +26,10 @@ def get_plot_path():
     return get_folder_path("_plots")
 
 
+def get_path(folder_name):
+    return get_folder_path(folder_name)
+
+
 def save_log_json(log_dict, name):
     import json
     with open(get_log_path().joinpath(f"{name}.json"), "w") as f:
