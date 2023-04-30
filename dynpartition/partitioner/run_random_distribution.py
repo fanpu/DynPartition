@@ -7,6 +7,7 @@ import torch
 from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.dataset.tree import Tree
 from dynpartition.partitioner.async_execution import test_model_with
+from dynpartition.partitioner.partitioner_utils import ALL_DEVICES
 
 
 def run_random_distribution(
@@ -85,25 +86,43 @@ def run_random_distribution(
 
 
 def _main():
-    # import lovely_tensors
-    # lovely_tensors.monkey_patch()
     print("Testing...")
     print()
-    device = torch.device(
-        "cuda" if (False and torch.cuda.is_available()) else "cpu"
-    )
-    devices = ["cpu", "cuda:0"]
+    devices = ALL_DEVICES
 
-    math_model, dataset = load_math_model(device)
-    tree_lstm, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+    math_model, dataset = load_math_model()
+    tree_lstm, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
+    tree_dataset = dev_dataset.trees
 
-    print("MathFunc on Single Device")
-    trees = run_random_distribution(dataset, devices)
+    if len(devices) >= 3:
+        print("MathFunc on Random Distribution with 1 module per device")
+        trees = run_random_distribution(dataset, devices, [1]*len(devices))
+        test_model_with(math_model, trees[:1000], devices, 'sync')
+        test_model_with(math_model, trees[:1000], devices, 'async')
+
+        print("TreeLSTM on Random Distribution with 1 module per device")
+        trees = run_random_distribution(tree_dataset, devices, [1]*len(devices))
+        test_model_with(tree_lstm, trees[:500], devices, 'sync')
+        test_model_with(tree_lstm, trees[:500], devices, 'async')
+
+    if len(devices) >= 2:
+        print("MathFunc on Random Distribution with 2 module per device")
+        trees = run_random_distribution(dataset, devices, [2]*len(devices))
+        test_model_with(math_model, trees[:1000], devices, 'sync')
+        test_model_with(math_model, trees[:1000], devices, 'async')
+
+        print("TreeLSTM on Random Distribution with 2 module per device")
+        trees = run_random_distribution(tree_dataset, devices, [2]*len(devices))
+        test_model_with(tree_lstm, trees[:500], devices, 'sync')
+        test_model_with(tree_lstm, trees[:500], devices, 'async')
+
+    print("MathFunc on Random Distribution with 3 module per device")
+    trees = run_random_distribution(dataset, devices, [3] * len(devices))
     test_model_with(math_model, trees[:1000], devices, 'sync')
     test_model_with(math_model, trees[:1000], devices, 'async')
 
-    print("TreeLSTM on Single Device")
-    trees = run_random_distribution(dev_dataset.trees, devices)
+    print("TreeLSTM on Random Distribution with 3 module per device")
+    trees = run_random_distribution(tree_dataset, devices, [3] * len(devices))
     test_model_with(tree_lstm, trees[:500], devices, 'sync')
     test_model_with(tree_lstm, trees[:500], devices, 'async')
 

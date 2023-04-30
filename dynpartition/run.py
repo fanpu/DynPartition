@@ -8,33 +8,29 @@ from dynpartition.partitioner.run_single_device import run_single_device
 
 
 def main():
-    # import lovely_tensors
-    # lovely_tensors.monkey_patch()
     print("Testing...")
     print()
-    device = torch.device(
-        "cuda" if (False and torch.cuda.is_available()) else "cpu"
-    )
+    device = "cuda:0"
     devices = ["cpu", "cuda:0"]
 
-    model, dataset = load_math_model(device)
+    model, dataset = load_math_model()
 
     print("MathFunc on Single Device")
     trees = run_single_device(dataset, device)
-    test_model_with(model, trees[:1000], devices, 'sync')
-    test_model_with(model, trees[:1000], devices, 'async')
+    test_model_with(model, trees[:1000], [device], 'sync')
+    test_model_with(model, trees[:1000], [device], 'async')
 
     print("MathFunc on Multiple with Random Distribution")
     trees = run_random_distribution(dataset, devices)
     test_model_with(model, trees[:1000], devices, 'sync')
     test_model_with(model, trees[:1000], devices, 'async')
 
-    model, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+    model, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
 
     print("TreeLSTM on Single Device")
     trees = run_single_device(dev_dataset.trees, device)
-    test_model_with(model, trees[:500], devices, 'sync')
-    test_model_with(model, trees[:500], devices, 'async')
+    test_model_with(model, trees[:500], [device], 'sync')
+    test_model_with(model, trees[:500], [device], 'async')
 
     print("TreeLSTM on Multiple with Random Distribution")
     trees = run_random_distribution(dev_dataset.trees, devices)

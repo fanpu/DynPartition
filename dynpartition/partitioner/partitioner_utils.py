@@ -1,11 +1,11 @@
-from typing import Union, Tuple, Sequence
+from typing import Union, Tuple, Sequence, List
 
 import torch
 
 
 _devices = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
 _devices.append('cpu')
-ALL_DEVICES = _devices
+ALL_DEVICES: List[str] = _devices
 
 
 def device_id_to_device_string(device_id):

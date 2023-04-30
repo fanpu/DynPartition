@@ -23,16 +23,12 @@ def run_single_device(
 
 
 def _main():
-    # import lovely_tensors
-    # lovely_tensors.monkey_patch()
     print("Testing...")
     print()
-    device = torch.device(
-        "cuda" if (False and torch.cuda.is_available()) else "cpu"
-    )
+    device = "cuda:0"
 
-    math_model, dataset = load_math_model(device)
-    tree_lstm, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+    math_model, dataset = load_math_model()
+    tree_lstm, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
 
     print("MathFunc on Single Device")
     trees = run_single_device(dataset, device)

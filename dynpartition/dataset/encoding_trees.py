@@ -147,11 +147,8 @@ def create_tree_embedding_dataset(
 
 
 if __name__ == '__main__':
-    device = torch.device(
-        "cuda" if (False and torch.cuda.is_available()) else "cpu"
-    )
-    _, dataset = load_math_model(device)
-    _, train_dataset, dev_dataset, test_dataset = load_tree_lstm(device)
+    _, dataset = load_math_model()
+    _, train_dataset, dev_dataset, test_dataset = load_tree_lstm()
 
     start_time = time.time()
     print(encode_tree(dataset[0], order="in-order"))
