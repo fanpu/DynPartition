@@ -43,6 +43,7 @@ def for_time_measurement(
         if isinstance(i.device_for_output, str):
             i.device_for_output = torch.device(i.device_for_output)
 
+        print(devices)
         assert i.device_for_state in devices
         assert i.device_for_output in devices
 

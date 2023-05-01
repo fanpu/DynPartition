@@ -11,6 +11,7 @@ from dqn import DQN_Agent
 from dynpartition.get_dir import get_plot_path
 from scheduler_env import SchedulerEnv
 
+
 def main():
     num_seeds = 1
     num_episodes = 100
@@ -18,7 +19,7 @@ def main():
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
     res = np.zeros((num_seeds, l))
-    agent = DQN_Agent(SchedulerEnv(), strategy='static')
+    agent = DQN_Agent(SchedulerEnv(), strategy='static-cpu')
 
     reward_means = []
     for i in tqdm.tqdm(range(num_seeds)):
