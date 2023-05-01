@@ -90,15 +90,6 @@ class SchedulerEnv(gym.Env):
         for idx, device_id in enumerate(action):
             device_allocations[idx] = device_id_to_device_string(device_id)
 
-<<<<<<< HEAD:dynpartition/partitioner/scheduler_env.py
-        allocation_summary(device_allocations)
-
-        self.current_batch += 1
-
-        terminated = self.current_batch == self.num_batches
-
-=======
->>>>>>> 9c0f7c11057df7ca435b5757a659004dc16d5416:dynpartition/partitioner/rl/scheduler_env.py
         tree = self.dataset.trees[self.obs_id]
         for traversal_idx in range(tree.size()):
             node = tree.traversal_dict[traversal_idx]
@@ -112,34 +103,6 @@ class SchedulerEnv(gym.Env):
             execution_strategy='async',
         )
 
-<<<<<<< HEAD:dynpartition/partitioner/scheduler_env.py
-        start = torch.cuda.Event(enable_timing=True)
-        end = torch.cuda.Event(enable_timing=True)
-        start.record()
-        execute_forward()
-        end.record()
-
-        # run_times = timeit.repeat(
-        #     execute_forward,
-        #     number=1,
-        #     repeat=self.num_repeat,
-        #     globals=globals()
-        # )
-        # mean, std = np.mean(run_times), np.std(run_times)
-        # print(f"Mean: {mean}, Std: {std}")
-
-        # Waits for everything to finish running
-        torch.cuda.synchronize()
-
-        elapsed_time = start.elapsed_time(end)
-        reward = -elapsed_time
-
-        # run_times = timeit.repeat(
-        #     execute_forward, number=1, repeat=self.num_repeat, globals=globals())
-        # mean, std = np.mean(run_times), np.std(run_times)
-
-        # reward = -mean
-=======
         run_times = timeit.repeat(
             execute_forward,
             number=1,
@@ -151,7 +114,6 @@ class SchedulerEnv(gym.Env):
 
         # Waits for everything to finish running
         torch.cuda.synchronize()
->>>>>>> 9c0f7c11057df7ca435b5757a659004dc16d5416:dynpartition/partitioner/rl/scheduler_env.py
         self._gen_new_sample()
 
         observation = self._get_obs()
