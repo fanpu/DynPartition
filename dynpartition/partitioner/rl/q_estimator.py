@@ -6,9 +6,14 @@ import torch
 class FullyConnectedModel(torch.nn.Module):
     def __init__(self, input_size, output_shape, num_layers=2):
         super().__init__()
+        if isinstance(input_size, tuple):
+            input_size = math.prod(input_size)
+
+        self.input_size = input_size
         self.output_shape = output_shape
 
         self.layers = torch.nn.ModuleList()
+        self.layers.append(torch.nn.Flatten(start_dim=0))
         self.layers.append(torch.nn.Linear(input_size, 16))
         self.layers.append(torch.nn.ReLU())
         for _ in range(num_layers - 1):

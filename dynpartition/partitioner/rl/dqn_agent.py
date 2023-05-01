@@ -44,7 +44,7 @@ class DqnAgent:
     def random_strategy(self):
         return np.random.randint(
             low=0,
-            high=len(),
+            high=2,
             size=self.n_nodes,
             dtype=int
         )
@@ -86,23 +86,37 @@ class DqnAgent:
         else:
             return self.epsilon_greedy_policy(q_values)
 
-    def compute_loss(self, minibatch) -> torch.Tensor:
+    def policy_loss(self, minibatch) -> torch.Tensor:
         loss = torch.tensor(0.0)
-        y = []
-        q_predict = []
 
-        for state, action, reward, new_state in minibatch:
-            y.append(reward)
-            q_state = self.q_network.policy_net(state)
+        for state, action, reward in minibatch:
+            policy = self.q_network.policy_net(state)
+
+            log_probs = torch.log(
+                policy.gather(1, action.unsqueeze(1)).squeeze(1)
+            )
+            loss -= log_probs * reward
+
+        return loss / len(minibatch)
+
+    def value_loss(self, minibatch) -> torch.Tensor:
+        loss = torch.tensor(0.0)
+
+        for state, action, reward in minibatch:
+            policy = self.q_network.policy_net(state)
+            # value = self.q_network.value_net(policy)
             idx = torch.arange(len(action))
-            q_predict.append(q_state[idx, action].sum())
 
-        for yi, qi in zip(y, q_predict):
-            yi = torch.tensor(yi, device=qi.device, dtype=qi.dtype)
-            loss += torch.nn.functional.mse_loss(yi, qi)
+            predict = policy[idx, action].sum()
+            reward = torch.tensor(
+                reward,
+                device=predict.device,
+                dtype=predict.dtype
+            )
 
-        loss /= len(y)
-        return loss
+            loss += torch.nn.functional.mse_loss(reward, predict)
+
+        return loss / len(minibatch)
 
     def train(self):
         # In this function, we will train our network.
@@ -116,17 +130,15 @@ class DqnAgent:
         self.q_network.value_net.zero_grad()
         self.q_network.optimizer.zero_grad()
 
-        action = self.epsilon_greedy_policy(
-            self.q_network.policy_net(state)
-        )
-        new_state, reward, done, info = self.env.step(action)
-        self.replay.append((state, action, reward, new_state))
+        policy = self.q_network.policy_net(state)
+        action = self.epsilon_greedy_policy(policy)
+        _, reward, _, _ = self.env.step(action)
+        self.replay.append((state, action, reward))
 
         minibatch = self.replay.sample_batch(self.N)
-        loss = self.compute_loss(minibatch)
+        loss = self.value_loss(minibatch)
         loss.backward()
         self.q_network.optimizer.step()
-
 
     @torch.no_grad()
     def test(self):
@@ -139,6 +151,6 @@ class DqnAgent:
         state = self.env.reset()
         cumulative_rewards = 0
         action = self.greedy_policy(self.q_network.policy_net(state))
-        state, reward, done, info = self.env.step(action)
+        _, reward, _, _ = self.env.step(action)
         cumulative_rewards += reward
         return cumulative_rewards

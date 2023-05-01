@@ -20,7 +20,7 @@ class QNetwork:
         self.n_a_total = self.n_nodes * self.n_a
         self.n_a_shape = (self.n_nodes, self.n_a)
         self.policy_net = FullyConnectedModel(self.n_s, self.n_a_shape)
-        self.value_net = FullyConnectedModel(math.prod(self.n_a_shape), (1,))
+        self.value_net = FullyConnectedModel(self.n_a_shape, (1, ))
         self.optimizer = torch.optim.Adam(self.policy_net.parameters(), lr=lr)
 
     def save_model_weights(self, suffix):

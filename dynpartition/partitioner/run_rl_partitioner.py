@@ -1,38 +1,40 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import tqdm
 
 from dynpartition.get_dir import get_plot_path
 from dynpartition.partitioner.rl.dqn_agent import DqnAgent
 
 
 def main():
-    num_seeds = 5
-    num_episodes = 1000
+    num_seeds = 1
+    num_episodes = 100
     num_test_episodes = 5
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
     res = np.zeros((num_seeds, l))
     agent = DqnAgent(strategy='rl')
 
-    for i in tqdm.tqdm(range(num_seeds)):
+    for i in range(num_seeds):
         reward_means = []
         for m in range(num_episodes):
             agent.train()
-            if m % episodes_between_test == 0:
-                print(f"Episode: {m}")
-                G = np.zeros(episodes_between_test)
-                for k in range(num_test_episodes):
-                    g = agent.test()
-                    G[k] = g
 
-                reward_mean = G.mean()
-                reward_sd = G.std()
-                print(
-                    f"The test reward for episode {m} is {reward_mean} "
-                    f"with sd of {reward_sd}."
-                )
-                reward_means.append(reward_mean)
+            if m % episodes_between_test != 0:
+                continue
+
+            print(f"Episode: {m}")
+            G = np.zeros(episodes_between_test)
+            for k in range(num_test_episodes):
+                g = agent.test()
+                G[k] = g
+
+            reward_mean = G.mean()
+            reward_sd = G.std()
+            print(
+                f"The test reward for episode {m} is {reward_mean} "
+                f"with sd of {reward_sd}."
+            )
+            reward_means.append(reward_mean)
 
         print(reward_means)
         res[i] = np.array(reward_means)

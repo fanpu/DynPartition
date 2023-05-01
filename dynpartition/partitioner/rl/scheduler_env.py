@@ -68,7 +68,7 @@ class SchedulerEnv(gym.Env):
         self.obs_id = np.random.randint(low=0, high=self.dataset_len)
 
     def _get_obs(self):
-        return self.encoded_trees[self.obs_id].reshape(-1, )
+        return self.encoded_trees[self.obs_id]
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
