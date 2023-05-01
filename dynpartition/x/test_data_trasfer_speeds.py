@@ -3,7 +3,7 @@ import timeit
 import torch
 
 from dynpartition.get_dir import save_log_json
-from dynpartition.partitioner.partitioner_utils import ALL_DEVICES
+from dynpartition.partitioner.utils import ALL_DEVICES
 
 
 def test_data_transfer_speeds():

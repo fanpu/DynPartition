@@ -80,7 +80,7 @@ class SentimentModule(nn.Module):
             self.l1 = self.l1.cuda()
 
     def forward(self, *vec):
-        return self.logsoftmax(self.l1(vec[1]))
+        return self.logsoftmax(self.l1(vec[1]), )
 
 
 class BinaryTreeLSTM(nn.Module):
