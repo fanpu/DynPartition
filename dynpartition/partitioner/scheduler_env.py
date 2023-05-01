@@ -100,8 +100,6 @@ class SchedulerEnv(gym.Env):
 
         terminated = self.current_batch == self.num_batches
 
-        self.obs_id = 1337
-
         tree = self.dataset.trees[self.obs_id]
         for traversal_idx in range(tree.size()):
             node = tree.traversal_dict[traversal_idx]
@@ -115,32 +113,26 @@ class SchedulerEnv(gym.Env):
             execution_strategy='async',
         )
 
-        rewards = []
-        for i in range(100):
-            start = torch.cuda.Event(enable_timing=True)
-            end = torch.cuda.Event(enable_timing=True)
-            start.record()
-            execute_forward()
-            end.record()
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
+        execute_forward()
+        end.record()
 
-            # run_times = timeit.repeat(
-            #     execute_forward,
-            #     number=1,
-            #     repeat=self.num_repeat,
-            #     globals=globals()
-            # )
-            # mean, std = np.mean(run_times), np.std(run_times)
-            # print(f"Mean: {mean}, Std: {std}")
+        # run_times = timeit.repeat(
+        #     execute_forward,
+        #     number=1,
+        #     repeat=self.num_repeat,
+        #     globals=globals()
+        # )
+        # mean, std = np.mean(run_times), np.std(run_times)
+        # print(f"Mean: {mean}, Std: {std}")
 
-            # Waits for everything to finish running
-            torch.cuda.synchronize()
+        # Waits for everything to finish running
+        torch.cuda.synchronize()
 
-            elapsed_time = start.elapsed_time(end)
-            reward = -elapsed_time
-
-            rewards.append(reward)
-
-        print(rewards)
+        elapsed_time = start.elapsed_time(end)
+        reward = -elapsed_time
 
         # run_times = timeit.repeat(
         #     execute_forward, number=1, repeat=self.num_repeat, globals=globals())
