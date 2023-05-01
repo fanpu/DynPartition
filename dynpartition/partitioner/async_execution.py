@@ -14,7 +14,7 @@ from dynpartition.models.MathFuncSolver import MathFuncSolver, \
     MathBinaryTreeLeafModule, MathCheckModule, MathBinaryTreeComposer
 from dynpartition.models.TreeLSTM import TreeLSTMSentiment, \
     BinaryTreeLeafModule, SentimentModule, BinaryTreeComposer
-from dynpartition.partitioner.partitioner_utils import tensors_to_device
+from dynpartition.partitioner.utils import tensors_to_device
 
 TREE_MODELS = Union[MathFuncSolver, TreeLSTMSentiment]
 

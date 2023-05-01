@@ -5,10 +5,9 @@ from gym import spaces
 
 from dynpartition.dataset.encoding_trees import create_tree_embedding_dataset
 from dynpartition.dataset.load import load_tree_lstm
-from dynpartition.partitioner.partitioner_utils import \
-    device_id_to_device_string, device_id_to_device, allocation_summary, \
-    ALL_DEVICES
 from dynpartition.partitioner.time_measurements import for_time_measurement
+from dynpartition.partitioner.utils import \
+    device_id_to_device_string, device_id_to_device, ALL_DEVICES
 
 batch_size = 30  # 120
 MAX_NODES = 128
@@ -94,7 +93,7 @@ class SchedulerEnv(gym.Env):
         for idx, device_id in enumerate(action):
             device_allocations[idx] = device_id_to_device_string(device_id)
 
-        allocation_summary(device_allocations)
+        # allocation_summary(device_allocations)
 
         self.current_batch += 1
 

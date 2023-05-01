@@ -7,8 +7,8 @@ import torch
 from dynpartition.dataset.load import load_tree_lstm, load_math_model
 from dynpartition.dataset.tree import Tree
 from dynpartition.get_dir import save_log_json
-from dynpartition.partitioner.partitioner_utils import ALL_DEVICES
 from dynpartition.partitioner.time_measurements import timeit_dataset
+from dynpartition.partitioner.utils import ALL_DEVICES
 
 
 def run_random_distribution(
