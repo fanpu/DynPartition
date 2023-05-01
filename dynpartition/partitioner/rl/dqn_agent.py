@@ -91,16 +91,17 @@ class DqnAgent:
         y = []
         q_predict = []
 
-        for (state, action, reward, new_state, sample_done) in minibatch:
+        for state, action, reward, new_state in minibatch:
             y.append(reward)
-            q_predict.append(self.q_network.model(state)[
-                                 torch.arange(len(action)), action].sum())
+            q_state = self.q_network.policy_net(state)
+            idx = torch.arange(len(action))
+            q_predict.append(q_state[idx, action].sum())
 
-        for (yi, qi) in zip(y, q_predict):
-            loss += torch.square(yi - qi)
+        for yi, qi in zip(y, q_predict):
+            yi = torch.tensor(yi, device=qi.device, dtype=qi.dtype)
+            loss += torch.nn.functional.mse_loss(yi, qi)
 
         loss /= len(y)
-
         return loss
 
     def train(self):
@@ -110,34 +111,22 @@ class DqnAgent:
         # here, and store these transitions to memory, while also
         # updating your model.
         state = self.env.reset()
-        done = False
 
-        while not done:
-            self.q_network.model.zero_grad()
-            self.q_network.target.zero_grad()
-            self.q_network.optimizer.zero_grad()
+        self.q_network.policy_net.zero_grad()
+        self.q_network.value_net.zero_grad()
+        self.q_network.optimizer.zero_grad()
 
-            action = self.epsilon_greedy_policy(
-                self.q_network.model(state)
-            )
-            new_state, reward, done, info = self.env.step(action)
-            self.replay.append((state, action, reward, new_state, done))
+        action = self.epsilon_greedy_policy(
+            self.q_network.policy_net(state)
+        )
+        new_state, reward, done, info = self.env.step(action)
+        self.replay.append((state, action, reward, new_state))
 
-            minibatch = self.replay.sample_batch(self.N)
-            loss = self.compute_loss(minibatch)
-            loss.backward()
-            self.q_network.optimizer.step()
+        minibatch = self.replay.sample_batch(self.N)
+        loss = self.compute_loss(minibatch)
+        loss.backward()
+        self.q_network.optimizer.step()
 
-            # Update weights only every 50 steps to
-            # reduce stability issue of moving targets
-            self.c += 1
-            if self.c % 20 == 0:
-                self.q_network.target.load_state_dict(
-                    self.q_network.model.state_dict()
-                )
-                print("updating network")
-
-            state = new_state
 
     @torch.no_grad()
     def test(self):
@@ -148,10 +137,8 @@ class DqnAgent:
         # irrespective of whether you are using replay memory.
 
         state = self.env.reset()
-        done = False
         cumulative_rewards = 0
-        while not done:
-            action = self.greedy_policy(self.q_network.model(state))
-            state, reward, done, info = self.env.step(action)
-            cumulative_rewards += reward
+        action = self.greedy_policy(self.q_network.policy_net(state))
+        state, reward, done, info = self.env.step(action)
+        cumulative_rewards += reward
         return cumulative_rewards

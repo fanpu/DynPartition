@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import torch
 
@@ -17,22 +19,19 @@ class QNetwork:
         self.n_s = np.prod(env.observation_space.shape)
         self.n_a_total = self.n_nodes * self.n_a
         self.n_a_shape = (self.n_nodes, self.n_a)
-        self.model = FullyConnectedModel(self.n_s, self.n_a_total,
-                                         self.n_a_shape)
-        self.target = FullyConnectedModel(self.n_s, self.n_a_total,
-                                          self.n_a_shape)
-        self.target.load_state_dict(self.model.state_dict())
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        self.policy_net = FullyConnectedModel(self.n_s, self.n_a_shape)
+        self.value_net = FullyConnectedModel(math.prod(self.n_a_shape), (1,))
+        self.optimizer = torch.optim.Adam(self.policy_net.parameters(), lr=lr)
 
     def save_model_weights(self, suffix):
         # Helper function to save your model / weights.
         path = get_log_path().joinpath("model")
-        torch.save(self.model.state_dict(), path.joinpath(f"model_{suffix}"))
+        torch.save(self.policy_net.state_dict(), path.joinpath(f"model_{suffix}"))
         return path
 
     def load_model(self, model_file):
         # Helper function to load an existing model.
-        return self.model.load_state_dict(torch.load(model_file))
+        return self.policy_net.load_state_dict(torch.load(model_file))
 
     def load_model_weights(self, weight_file):
         # Optional Helper function to load model weights.
