@@ -2,7 +2,6 @@ import torch
 
 
 class FullyConnectedModel(torch.nn.Module):
-
     def __init__(self, input_size, output_size, output_shape):
         super().__init__()
 
@@ -25,7 +24,7 @@ class FullyConnectedModel(torch.nn.Module):
 
     def forward(self, inputs):
         x = self.activation1(self.linear1(inputs))
-        x = self.activation2(self.linear2(x))
-        x = self.activation3(self.linear3(x))
+        # x = self.activation2(self.linear2(x))
+        # x = self.activation3(self.linear3(x))
         x = self.output_layer(x)
         return x.reshape(self.output_shape)

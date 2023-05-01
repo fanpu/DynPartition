@@ -1,7 +1,9 @@
+import numpy as np
 import torch
 
 from dynpartition.get_dir import get_log_path
 from dynpartition.partitioner.rl.q_estimator import FullyConnectedModel
+from dynpartition.partitioner.rl.scheduler_env import SchedulerEnv
 
 
 class QNetwork:
@@ -9,14 +11,16 @@ class QNetwork:
     # The network should take in state of the world as an input,
     # and output Q values of the actions available to the agent as the output.
 
-    def __init__(self, env, lr):
-        nA = env.action_space[0].n
-        nNodes = len(env.action_space)
-        nS = env.observation_space.shape[0] * env.observation_space.shape[1]
-        nA_total = nNodes * nA
-        self.nA_shape = (nNodes, nA)
-        self.model = FullyConnectedModel(nS, nA_total, self.nA_shape)
-        self.target = FullyConnectedModel(nS, nA_total, self.nA_shape)
+    def __init__(self, env: SchedulerEnv, lr: float):
+        self.n_a = env.num_devices
+        self.n_nodes = np.prod(env.action_space.shape)
+        self.n_s = np.prod(env.observation_space.shape)
+        self.n_a_total = self.n_nodes * self.n_a
+        self.n_a_shape = (self.n_nodes, self.n_a)
+        self.model = FullyConnectedModel(self.n_s, self.n_a_total,
+                                         self.n_a_shape)
+        self.target = FullyConnectedModel(self.n_s, self.n_a_total,
+                                          self.n_a_shape)
         self.target.load_state_dict(self.model.state_dict())
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
 
