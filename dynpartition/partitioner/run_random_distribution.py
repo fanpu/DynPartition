@@ -27,11 +27,13 @@ def run_random_distribution(
 
     for i in range(len(devices)):
         devices[i] = torch.device(devices[i])
-        max_layer_per_device[i] = int(max(max_layer_per_device[i], 0))
-        max_layer_per_device[i] = int(min(max_layer_per_device[i], 3))
+        max_layer_per_device[i] = max(max_layer_per_device[i], 0)
+        max_layer_per_device[i] = min(max_layer_per_device[i], len(modules))
+        max_layer_per_device[i] = int(max_layer_per_device[i])
 
     if sum(max_layer_per_device) < 3:
-        raise ValueError("The sum of max_layer_per_device must be at least 3")
+        raise ValueError(f"The sum of max_layer_per_device must be "
+                         f"at least {len(modules)}")
 
     device_availability = {}
     allocated_module_list = {}

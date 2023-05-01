@@ -1,5 +1,3 @@
-import timeit
-
 import gym
 import numpy as np
 import torch
@@ -118,8 +116,7 @@ class SchedulerEnv(gym.Env):
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
         start.record()
-        test_model_with(self.model, dataset=[
-            tree], devices=ALL_DEVICES, execution_strategy='async', with_tqdm=False)
+        execute_forward()
         end.record()
         # run_times = timeit.repeat(
         #     execute_forward,
