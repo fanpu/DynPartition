@@ -26,7 +26,7 @@ The results will be saved in the `dynPartition/_logs` directory.
 The results can be created by using scripts in the `dynPartition/graphs` directory.
 
 ## Report
-The detailed analysis of this framework is presented in the "Project Report.pdf"
+The detailed analysis of this framework is presented in the `Project Report.pdf`
 file.
 
 ## Branches
