@@ -6,8 +6,8 @@ from dynpartition.partitioner.rl.dqn_agent import DqnAgent
 
 
 def main():
-    num_seeds = 1
-    num_episodes = 100
+    num_seeds = 5
+    num_episodes = 1000
     num_test_episodes = 5
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
@@ -54,11 +54,13 @@ def main():
     ax.set_ylabel('Reward', fontsize=15)
 
     ax.set_title(
-        f"DynPartition Learning Curve ({agent.strategy})", fontsize=20)
-    ax.set_ylim(-30, 0)
+        f"DynPartition Learning Curve ({agent.strategy})", fontsize=20
+    )
+    # ax.set_ylim(-30, 0)
 
     plot_path = get_plot_path().joinpath(
-        f"dynpartition_learning_curve_{agent.strategy}.png")
+        f"dynpartition_learning_curve_{agent.strategy}.png"
+    )
     plt.savefig(plot_path)
     print("Plot saved in", plot_path)
 
