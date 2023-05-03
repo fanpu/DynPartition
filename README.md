@@ -29,3 +29,8 @@ The results can be created by using scripts in the `dynPartition/graphs` directo
 The detailed analysis of this framework is presented in the "Project Report.pdf"
 file.
 
+## Branches
+The framework is implemented in two branches:
+- `master`: uses Reinforcement Learning scheduler based on Deep-Q Learning.
+- `using_policy_value`: uses Reinforcement Learning scheduler based on Policy
+  Gradient.
