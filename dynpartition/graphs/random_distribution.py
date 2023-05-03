@@ -127,9 +127,7 @@ def plot_random_distribution(data_dict):
 
 if __name__ == '__main__':
     a100_path = get_path("_logs_a100")
-    gtx1080ti_path = get_path("_logs_gtx1080ti")
 
     plot_random_distribution({
         "a100": a100_path,
-        # "gtx1080ti": gtx1080ti_path,
     })

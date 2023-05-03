@@ -63,15 +63,34 @@ def plot_manual_distribution(data_dict, manual_index):
     for i in keys:
         print(i, new_data_dict[i])
 
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5), sharey='row')
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     fig.tight_layout(pad=3.0)
     fig.subplots_adjust(top=0.85)
 
+    for i, key in enumerate(keys):
+        mean = new_data_dict[key]["mean"]
+        std = new_data_dict[key]["std"]
+        diff = new_data_dict[key]["max"] - new_data_dict[key]["min"]
+        err = min(std, diff / 2, mean - new_data_dict[key]["min"])
+        name = f"{key[1]} - {key[2]}"
+        if key[0] == "MathFunc":
+            ax[0].bar(name, mean, yerr=err, **default_plot_params)
+        elif key[0] == "TreeLSTM":
+            ax[1].bar(name, mean, yerr=err, **default_plot_params)
+        else:
+            raise ValueError(f"Unknown key: {key}")
+
+    ax[0].set_title("MathFunc")
+    ax[1].set_title("TreeLSTM")
+    ax[0].set_ylabel("Time [ms]")
+    ax[1].set_ylabel("Time [ms]")
+
     if manual_index == 1:
-        fig.suptitle("All left nodes on Device 0 and right nodes on Device 1")
-    if manual_index == 2:
+        fig.suptitle("Left portion of the tree on Device 0 "
+                     "and Right portion of the tree on Device 1")
+    elif manual_index == 2:
         fig.suptitle("All state calculations on Device 0 "
-                     "and all output calculations on Device 1")
+                     "and All output calculations on Device 1")
     else:
         fig.suptitle(f"Manual {manual_index} distribution")
 
@@ -85,9 +104,7 @@ def plot_manual_distribution(data_dict, manual_index):
 
 
 if __name__ == '__main__':
-    logs_path = get_path("_logs")
     a100_path = get_path("_logs_a100")
-    gtx1080ti_path = get_path("_logs_gtx1080ti")
 
-    plot_manual_distribution({"a100": logs_path}, manual_index=1)
-    # plot_manual_distribution({"a100": a100_path}, manual_index=2)
+    plot_manual_distribution({"a100": a100_path}, manual_index=1)
+    plot_manual_distribution({"a100": a100_path}, manual_index=2)
