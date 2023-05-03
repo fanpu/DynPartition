@@ -148,6 +148,7 @@ def test_model_with(
     model.eval()
     predictions = torch.zeros(len(dataset))
 
+    devices = copy.deepcopy(devices)
     for i in range(len(devices)):
         devices[i] = torch.device(devices[i])
 

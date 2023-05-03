@@ -76,7 +76,8 @@ def plot_random_distribution(data_dict):
     for i in keys:
         print(i, new_data_dict[i])
 
-    # Plot separate subplots for MathFunc with CPU and GPU and TreeLSTM with CPU and GPU
+    # Plot separate subplots for MathFunc with CPU and GPU
+    # and TreeLSTM with CPU and GPU
     fig, ax = plt.subplots(2, 2, figsize=(10, 7), sharey='row')
     fig.tight_layout(pad=3.0)
     fig.subplots_adjust(top=0.85)

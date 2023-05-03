@@ -3,6 +3,7 @@ import numpy as np
 
 from dynpartition.get_dir import get_plot_path
 from dynpartition.partitioner.rl.dqn_agent import DqnAgent
+from dynpartition.partitioner.utils import STRATEGY
 
 
 def main():
@@ -12,7 +13,7 @@ def main():
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
     res = np.zeros((num_seeds, l))
-    agent = DqnAgent(strategy='rl')
+    agent = DqnAgent(strategy=STRATEGY)
 
     for i in range(num_seeds):
         reward_means = []

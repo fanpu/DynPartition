@@ -8,6 +8,8 @@ import torch
 parser = argparse.ArgumentParser()
 parser.add_argument('--with-cpu', action='store_true',
                     help='Whether to test without CPU')
+parser.add_argument('--strategy', type=str, default=None,
+                    help='Which strategy to use')
 args = parser.parse_args()
 
 _devices = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
@@ -20,7 +22,9 @@ if args.with_cpu or torch.cuda.device_count() == 0:
 else:
     ALL_DEVICES: List[str] = _devices
 
+STRATEGY = args.strategy
 print(f"Devices: {ALL_DEVICES}")
+print(f"Strategy: {STRATEGY}")
 
 
 def device_id_to_device_string(device_id):
