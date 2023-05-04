@@ -1,14 +1,16 @@
-import matplotlib.pyplot as plt
+import json
+from datetime import datetime
+
 import numpy as np
 
-from dynpartition.get_dir import get_plot_path
+from dynpartition.get_dir import get_log_path
 from dynpartition.partitioner.rl.dqn_agent import DqnAgent
 from dynpartition.partitioner.utils import STRATEGY
 
 
 def main():
     num_seeds = 5
-    num_episodes = 1000
+    num_episodes = 10000
     num_test_episodes = 5
     episodes_between_test = 5
     l = num_episodes // episodes_between_test
@@ -17,13 +19,12 @@ def main():
 
     for i in range(num_seeds):
         reward_means = []
-        for m in range(num_episodes):
+        for m in range(1, num_episodes + 1):
             agent.train()
 
             if m % episodes_between_test != 0:
                 continue
 
-            print(f"Episode: {m}")
             G = np.zeros(episodes_between_test)
             for k in range(num_test_episodes):
                 g = agent.test()
@@ -31,39 +32,24 @@ def main():
 
             reward_mean = G.mean()
             reward_sd = G.std()
-            print(
-                f"The test reward for episode {m} is {reward_mean} "
-                f"with sd of {reward_sd}."
-            )
             reward_means.append(reward_mean)
+            print(f"({i + 1}/{num_seeds}) "
+                  f"Episode: {m}/{num_episodes} "
+                  f"Reward: {reward_mean} +/- {reward_sd}")
 
-        print(reward_means)
         res[i] = np.array(reward_means)
 
-    ks = np.arange(l) * episodes_between_test
-    print(res)
-    print(res.shape)
-    avs = np.mean(res, axis=0)
-    maxs = np.max(res, axis=0)
-    mins = np.min(res, axis=0)
-
-    fig, ax = plt.subplots(layout='constrained')
-    ax.fill_between(ks, mins, maxs, alpha=0.1)
-    ax.plot(ks, avs, '-o', markersize=1)
-
-    ax.set_xlabel('Episode', fontsize=15)
-    ax.set_ylabel('Reward', fontsize=15)
-
-    ax.set_title(
-        f"DynPartition Learning Curve ({agent.strategy})", fontsize=20
-    )
-    # ax.set_ylim(-30, 0)
-
-    plot_path = get_plot_path().joinpath(
-        f"dynpartition_learning_curve_{agent.strategy}.png"
-    )
-    plt.savefig(plot_path)
-    print("Plot saved in", plot_path)
+    timestamp = datetime.now().timestamp()
+    file_name = f"{timestamp}_dynpartition_learning_curve_{agent.strategy}"
+    with open(get_log_path().joinpath(f"{file_name}.json"), "w") as f:
+        json.dump({
+            "num_seeds": num_seeds,
+            "num_episodes": num_episodes,
+            "num_test_episodes": num_test_episodes,
+            "episodes_between_test": episodes_between_test,
+            "l": l,
+            "res": res.tolist(),
+        }, f)
 
 
 if __name__ == '__main__':
