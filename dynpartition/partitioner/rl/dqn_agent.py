@@ -7,7 +7,7 @@ from dynpartition.partitioner.rl.scheduler_env import SchedulerEnv
 
 
 class DqnAgent:
-    STRATEGIES = ['static', 'static-cpu', 'random', 'rl']
+    STRATEGIES = ['static', 'static-cpu', 'random', 'rl', 'rl-policy-value']
 
     def __init__(self, strategy, env=None):
         assert strategy in self.STRATEGIES
@@ -91,11 +91,21 @@ class DqnAgent:
 
         for state, action, reward in minibatch:
             policy = self.q_network.policy_net(state)
+            action = torch.tensor(
+                action,
+                device=policy.device,
+                dtype=torch.int64
+            )
+            reward = torch.tensor(
+                reward,
+                device=policy.device,
+                dtype=policy.dtype
+            )
 
             log_probs = torch.log(
                 policy.gather(1, action.unsqueeze(1)).squeeze(1)
             )
-            loss -= log_probs * reward
+            loss -= log_probs.nan_to_num().sum() * reward
 
         return loss / len(minibatch)
 
@@ -104,15 +114,23 @@ class DqnAgent:
 
         for state, action, reward in minibatch:
             policy = self.q_network.policy_net(state)
-            # value = self.q_network.value_net(policy)
-            idx = torch.arange(len(action))
 
-            predict = policy[idx, action].sum()
-            reward = torch.tensor(
-                reward,
-                device=predict.device,
-                dtype=predict.dtype
-            )
+            if self.strategy == "rl-policy-value":
+                predict = self.q_network.value_net(policy)
+                reward = torch.tensor(
+                    reward,
+                    device=predict.device,
+                    dtype=predict.dtype
+                )
+            else:
+                idx = torch.arange(len(action))
+
+                predict = policy[idx, action].sum()
+                reward = torch.tensor(
+                    reward,
+                    device=predict.device,
+                    dtype=predict.dtype
+                )
 
             loss += torch.nn.functional.mse_loss(reward, predict)
 
@@ -128,7 +146,8 @@ class DqnAgent:
 
         self.q_network.policy_net.zero_grad()
         self.q_network.value_net.zero_grad()
-        self.q_network.optimizer.zero_grad()
+        self.q_network.policy_net_optimizer.zero_grad()
+        self.q_network.value_net_optimizer.zero_grad()
 
         policy = self.q_network.policy_net(state)
         action = self.epsilon_greedy_policy(policy)
@@ -136,9 +155,17 @@ class DqnAgent:
         self.replay.append((state, action, reward))
 
         minibatch = self.replay.sample_batch(self.N)
-        loss = self.value_loss(minibatch)
-        loss.backward()
-        self.q_network.optimizer.step()
+        if self.strategy == "rl-policy-value":
+            policy_loss = self.policy_loss(minibatch)
+            policy_loss.backward()
+            self.q_network.policy_net_optimizer.step()
+            value_loss = self.value_loss(minibatch)
+            value_loss.backward()
+            self.q_network.value_net_optimizer.step()
+        else:
+            loss = self.value_loss(minibatch)
+            loss.backward()
+            self.q_network.policy_net_optimizer.step()
 
     @torch.no_grad()
     def test(self):
