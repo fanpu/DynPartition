@@ -26,7 +26,7 @@ export PYTHONPATH="${pwd}"
 sh dynPartition/run.sh
 ```
 
-The results will be saved in the `dynPartition/_logs` and `dynPartition/_plots`
+The results will be saved in the `dynPartition/_logs`
 directories.
 
 ## Results

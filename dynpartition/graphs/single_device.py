@@ -23,6 +23,8 @@ def plot_single_device(data_dict):
                 continue
             if "_single_" not in file.name:
                 continue
+            if not file.name.endswith(".json"):
+                continue
             files.append(file)
         data_dict[i] = files
 

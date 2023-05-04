@@ -51,12 +51,8 @@ def main():
             "l": l,
             "res": res.tolist(),
         }, f)
-    torch.save(agent.q_network.policy_net.state_dict(),
-               get_log_path().joinpath(f"{file_name}_policy.pt"))
-    torch.save(agent.q_network.value_net.state_dict(),
-               get_log_path().joinpath(f"{file_name}_value.pt"))
     torch.save(agent.get_action(),
-               get_log_path().joinpath(f"{file_name}_action.pt"))
+               get_log_path().joinpath(f"{file_name}_action.pth"))
 
 
 if __name__ == '__main__':

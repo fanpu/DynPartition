@@ -12,3 +12,4 @@ python3 "${HOME}/DynPartition/dynpartition/partitioner/run_rl_partitioner.py" --
 python3 "${HOME}/DynPartition/dynpartition/partitioner/run_rl_partitioner.py" --with-cpu --strategy static-cpu
 python3 "${HOME}/DynPartition/dynpartition/partitioner/run_rl_partitioner.py" --with-cpu --strategy random
 python3 "${HOME}/DynPartition/dynpartition/partitioner/run_rl_partitioner.py" --with-cpu --strategy rl
+python3 "${HOME}/DynPartition/dynpartition/partitioner/run_rl_partitioner.py" --with-cpu --strategy rl-policy-value

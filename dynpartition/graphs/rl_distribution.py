@@ -14,6 +14,8 @@ def plot_rl_distribution(data_dir):
             continue
         if f"_dynpartition_learning_curve_" not in file.name:
             continue
+        if not file.name.endswith(".json"):
+            continue
 
         strategy = file.name.split("_")[-1].replace(".json", "")
 
@@ -43,7 +45,7 @@ def plot_rl_distribution(data_dir):
         maxs = np.max(res, axis=0)
         mins = np.min(res, axis=0)
 
-        fig, ax = plt.subplots(layout='constrained')
+        fig, ax = plt.subplots()
         ax.fill_between(ks, mins, maxs, alpha=0.5)
         ax.plot(ks, avs, markersize=0.5, alpha=1)
         # add cumulative running average
@@ -63,12 +65,24 @@ def plot_rl_distribution(data_dir):
             color='red',
         )
 
+        ax.set_xlim(0, ks[-1])
+
         ax.set_xlabel('Episode', fontsize=15)
         ax.set_ylabel('Reward', fontsize=15)
 
-        ax.set_title(
-            f"DynPartition Learning Curve ({strategy})", fontsize=20
-        )
+        if strategy == "static":
+            title = "Static on GPU"
+        elif strategy == "static-cpu":
+            title = "Static on CPU"
+        elif strategy == "rl":
+            title = "RL with Q-Learning"
+        elif strategy == "rl-policy-value":
+            title = "RL with Policy Gradient"
+        else:
+            title = strategy.capitalize()
+
+        ax.set_title(title, fontsize=20)
+        fig.tight_layout()
 
         plot_path = get_plot_path().joinpath(
             f"dynpartition_learning_curve_{strategy}.png"

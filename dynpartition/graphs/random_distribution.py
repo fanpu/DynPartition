@@ -23,6 +23,8 @@ def plot_random_distribution(data_dict):
                 continue
             if "_random_" not in file.name:
                 continue
+            if not file.name.endswith(".json"):
+                continue
             files.append(file)
         data_dict[i] = files
 

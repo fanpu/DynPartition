@@ -22,6 +22,8 @@ def plot_data_transfer_speeds(data_dict):
                 continue
             if not file.name.startswith("data_transfer"):
                 continue
+            if not file.name.endswith(".json"):
+                continue
             files.append(file)
         data_dict[i] = files
 

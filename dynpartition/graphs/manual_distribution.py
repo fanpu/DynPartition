@@ -23,6 +23,8 @@ def plot_manual_distribution(data_dict, manual_index):
                 continue
             if f"_manual_{manual_index}_" not in file.name:
                 continue
+            if not file.name.endswith(".json"):
+                continue
             files.append(file)
         data_dict[i] = files
 
