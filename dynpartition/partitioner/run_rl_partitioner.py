@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 
 import numpy as np
+import torch
 
 from dynpartition.get_dir import get_log_path
 from dynpartition.partitioner.rl.dqn_agent import DqnAgent
@@ -50,6 +51,12 @@ def main():
             "l": l,
             "res": res.tolist(),
         }, f)
+    torch.save(agent.q_network.policy_net.state_dict(),
+               get_log_path().joinpath(f"{file_name}_policy.pt"))
+    torch.save(agent.q_network.value_net.state_dict(),
+               get_log_path().joinpath(f"{file_name}_value.pt"))
+    torch.save(agent.get_action(),
+               get_log_path().joinpath(f"{file_name}_action.pt"))
 
 
 if __name__ == '__main__':

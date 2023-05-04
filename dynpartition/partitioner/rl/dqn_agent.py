@@ -154,3 +154,9 @@ class DqnAgent:
         _, reward, _, _ = self.env.step(action)
         cumulative_rewards += reward
         return cumulative_rewards
+
+    def get_action(self):
+        state = self.env.reset()
+        policy = self.q_network.policy_net(state)
+        action = self.greedy_policy(policy)
+        return action
