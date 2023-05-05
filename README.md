@@ -4,7 +4,7 @@ Networks over Heterogeneous GPU Systems for Inference Tasks](paper.pdf).
 
 The DynPartition framework is built on top of PyTorch, it uses a reinforcement learning
 scheduler based on Deep-Q Learning for generating an optimal allocation policy
-across multiple GPUs for Tree-typed dynamic neural networks. The framework
+across multiple GPUs for tree-typed dynamic neural networks. The framework
 supports both static and dynamic partitioning of the network.
 The framework is designed to be modular and can be easily extended to support
 other types of neural networks and other types of partitioning algorithms.
