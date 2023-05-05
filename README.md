@@ -35,8 +35,7 @@ directory.
 
 ## Report
 
-The detailed analysis of this framework is presented in the `Project Report.pdf`
-file.
+The detailed analysis of this framework is presented in [our paper](paper.pdf).
 
 ## Branches
 
