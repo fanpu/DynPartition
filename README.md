@@ -1,5 +1,8 @@
 # DynPartition
-DynPartition framework built on top of PyTorch, it uses Reinforcement Learning
+Code for the paper [DynPartition: Automatic Optimal Pipeline Parallelism of Dynamic Neural
+Networks over Heterogeneous GPU Systems for Inference Tasks](paper.pdf).
+
+The DynPartition framework is built on top of PyTorch, it uses a reinforcement learning
 scheduler based on Deep-Q Learning for generating an optimal allocation policy
 across multiple GPUs for Tree-typed dynamic neural networks. The framework
 supports both static and dynamic partitioning of the network.
