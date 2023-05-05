@@ -27,6 +27,7 @@ def for_time_measurement(
         raise ValueError(f'Unknown execution strategy: {execution_strategy}')
 
     model.eval()
+    devices = copy.deepcopy(devices)
     for i in range(len(devices)):
         devices[i] = torch.device(devices[i])
 
@@ -71,6 +72,7 @@ def timeit_dataset(
 
     model.eval()
 
+    devices = copy.deepcopy(devices)
     for i in range(len(devices)):
         devices[i] = torch.device(devices[i])
 

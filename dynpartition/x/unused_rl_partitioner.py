@@ -1,3 +1,5 @@
+import numpy as np
+
 num_batches = 3
 batch_size = 5  # 120
 image_w = 128
@@ -66,7 +68,6 @@ def pipeline_parallelism():
     pp_mean, pp_std = np.mean(pp_run_times), np.std(pp_run_times)
 
     return pp_mean, pp_std
-
 
 # sg_mean, sg_std = single_gpu()
 # mp_mean, mp_std = model_parallelism()

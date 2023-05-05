@@ -25,6 +25,7 @@ def run_random_distribution(
         raise ValueError("The length of devices and max_layer_per_device "
                          "must be the same")
 
+    devices = copy.deepcopy(devices)
     for i in range(len(devices)):
         devices[i] = torch.device(devices[i])
         max_layer_per_device[i] = max(max_layer_per_device[i], 0)

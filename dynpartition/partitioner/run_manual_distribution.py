@@ -1,3 +1,4 @@
+import math
 from typing import List, Union
 
 import numpy as np
@@ -32,8 +33,13 @@ def run_manual_1(
             tree.device_for_state = devices[1]
 
         tree.device_for_output = devices[1]
-        tree_to_device(tree.children[0], devices[0])
-        tree_to_device(tree.children[1], devices[1])
+
+        half_children = math.floor(len(tree.children) / 2)
+
+        for i in tree.children[:half_children]:
+            tree_to_device(i, devices[0])
+        for i in tree.children[half_children:]:
+            tree_to_device(i, devices[1])
 
     return trees
 
@@ -59,7 +65,6 @@ def run_manual_2(
 def _main():
     devices = ALL_DEVICES
     n_devices = len(devices)
-    device_name = f"{int('cpu' in devices)}_{n_devices}"
 
     print("Testing...")
     math_model, dataset = load_math_model()
@@ -69,7 +74,6 @@ def _main():
     assert len(devices) >= 2
     assert devices[0] == 'cpu'
     assert devices[1].startswith('cuda')
-    devices = devices[1:]
     print(f"Distributed on {devices}")
 
     print("MathFunc on Manual Distribution with "
@@ -92,7 +96,7 @@ def _main():
     print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
     print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
     save_log_json(sync_times, name=f"treelstm_manual_1_sync_cpu_cuda0")
-    save_log_json(async_times, name=f"treelstm_random_1_async_cpu_cuda0")
+    save_log_json(async_times, name=f"treelstm_manual_1_async_cpu_cuda0")
 
     print("MathFunc on Manual Distribution with "
           "all state calculation in cpu and "
@@ -114,10 +118,11 @@ def _main():
     print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
     print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
     save_log_json(sync_times, name=f"treelstm_manual_2_sync_cpu_cuda0")
-    save_log_json(async_times, name=f"treelstm_random_2_async_cpu_cuda0")
+    save_log_json(async_times, name=f"treelstm_manual_2_async_cpu_cuda0")
 
     if not len(devices) >= 3:
         return
+
     devices = devices[1:]
     print(f"Distributed on {devices}")
     assert devices[0].startswith('cuda')
@@ -143,7 +148,7 @@ def _main():
     print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
     print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
     save_log_json(sync_times, name=f"treelstm_manual_1_sync_cuda0_cuda1")
-    save_log_json(async_times, name=f"treelstm_random_1_async_cuda0_cuda1")
+    save_log_json(async_times, name=f"treelstm_manual_1_async_cuda0_cuda1")
 
     print("MathFunc on Manual Distribution with "
           "all state calculation in cuda:0 and "
@@ -165,7 +170,7 @@ def _main():
     print(f"Sync: {np.mean(sync_times)} +- {np.std(sync_times)}")
     print(f"Async: {np.mean(async_times)} +- {np.std(async_times)}")
     save_log_json(sync_times, name=f"treelstm_manual_2_sync_cuda0_cuda1")
-    save_log_json(async_times, name=f"treelstm_random_2_async_cuda0_cuda1")
+    save_log_json(async_times, name=f"treelstm_manual_2_async_cuda0_cuda1")
 
 
 if __name__ == '__main__':

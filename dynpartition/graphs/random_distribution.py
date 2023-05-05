@@ -23,6 +23,8 @@ def plot_random_distribution(data_dict):
                 continue
             if "_random_" not in file.name:
                 continue
+            if not file.name.endswith(".json"):
+                continue
             files.append(file)
         data_dict[i] = files
 
@@ -76,7 +78,8 @@ def plot_random_distribution(data_dict):
     for i in keys:
         print(i, new_data_dict[i])
 
-    # Plot separate subplots for MathFunc with CPU and GPU and TreeLSTM with CPU and GPU
+    # Plot separate subplots for MathFunc with CPU and GPU
+    # and TreeLSTM with CPU and GPU
     fig, ax = plt.subplots(2, 2, figsize=(10, 7), sharey='row')
     fig.tight_layout(pad=3.0)
     fig.subplots_adjust(top=0.85)
@@ -126,9 +129,7 @@ def plot_random_distribution(data_dict):
 
 if __name__ == '__main__':
     a100_path = get_path("_logs_a100")
-    gtx1080ti_path = get_path("_logs_gtx1080ti")
 
     plot_random_distribution({
         "a100": a100_path,
-        # "gtx1080ti": gtx1080ti_path,
     })
